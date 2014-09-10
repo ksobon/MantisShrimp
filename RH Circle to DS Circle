@@ -1,0 +1,57 @@
+import clr
+import sys
+RhinoIOPath = r'C:\Program Files\Dynamo 0.7'
+if RhinoIOPath not in sys.path:
+	sys.path.Add(RhinoIOPath)
+clr.AddReference('ProtoGeometry')
+clr.AddReferenceToFileAndPath(RhinoIOPath + r"\Rhino3dmIO.dll")
+from Autodesk.DesignScript.Geometry import *
+import Rhino as rc
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+rhObjects = IN[0]
+
+#Vector3d conversion function
+def rhVector3dToVector(rhVector):
+	VectorX = rhVector.X 
+	VectorY = rhVector.Y
+	VectorZ = rhVector.Z
+	dsVector = Vector.ByCoordinates(VectorX, VectorY, VectorZ)
+	return dsVector
+
+#Point3d Conversion
+def rhPoint3dToPoint(rhPoint):
+	rhPointX = rhPoint.X
+	rhPointY = rhPoint.Y
+	rhPointZ = rhPoint.Z
+	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	return dsPoint
+	
+#Plane conversion function
+def rhPlaneToPlane(rhPlane):
+	normal = rhVector3dToVector(rhPlane.Normal)
+	origin = rhPoint3dToPoint(rhPlane.Origin)
+	dsPlane = Plane.ByOriginNormal(origin, normal)
+	return dsPlane
+
+#Circle is considered ArcCurve
+#circle conversion function
+def rhArcToArc(rhCurve):
+	rhCircle = rhCurve.TryGetCircle()[1]
+	radius = rhCircle.Radius
+	plane = rhPlaneToPlane(rhCircle.Plane)
+	dsCircle = Circle.ByPlaneRadius(plane, radius)
+	return dsCircle
+
+#check if object is a cicle
+#if true convert to DS Circle
+dsCircles = []
+for object in rhObjects:
+	if type(object.Geometry) == rc.Geometry.ArcCurve:
+		if object.Geometry.IsCircle:
+			if object.Geometry.TryGetCircle()[0]:
+				dsCircles.append(rhArcToArc(object.Geometry))
+
+#Assign your output to the OUT variable
+OUT = dsCircles
