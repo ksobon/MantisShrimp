@@ -1,0 +1,45 @@
+#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+RhinoIOPath = r'C:\Program Files\Dynamo 0.7'
+if RhinoIOPath not in sys.path:
+	sys.path.Add(RhinoIOPath)
+clr.AddReference('ProtoGeometry')
+clr.AddReferenceToFileAndPath(RhinoIOPath + r"\Rhino3dmIO.dll")
+from Autodesk.DesignScript.Geometry import *
+import Rhino as rc
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+rhObjects = IN[0]
+
+#3dPoint Conversion
+def rhPoint3dToPoint(rhPoint):
+	rhPointX = rhPoint.X
+	rhPointY = rhPoint.Y
+	rhPointZ = rhPoint.Z
+	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	return dsPoint
+
+#LineCurve conversion function
+def rhLineToLine(rhCurve):
+	rhStartPoint = rhCurve.PointAtStart
+	dsStartPoint = rhPoint3dToPoint(rhStartPoint)
+	rhEndPoint = rhCurve.PointAtEnd
+	dsEndPoint = rhPoint3dToPoint(rhEndPoint)
+	dsLine = Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
+	return dsLine
+
+#check if object is a LineCurve
+#if true convert to DS Line
+
+dsLines = []
+for object in rhObjects:
+	if type(object.Geometry) == rc.Geometry.LineCurve:
+		dsLines.append(rhLineToLine(object.Geometry))
+	else:
+		continue
+#Assign your output to the OUT variable
+OUT = dsLines
