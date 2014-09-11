@@ -1,0 +1,174 @@
+#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+RhinoIOPath = r'C:\Program Files\Dynamo 0.7'
+if RhinoIOPath not in sys.path:
+	sys.path.Add(RhinoIOPath)
+clr.AddReference('ProtoGeometry')
+clr.AddReferenceToFileAndPath(RhinoIOPath + r"\Rhino3dmIO.dll")
+from Autodesk.DesignScript.Geometry import *
+import Rhino as rc
+
+from System import Array
+from System.Collections.Generic import *
+
+# Import RevitAPI
+clr.AddReference("RevitAPI")
+import Autodesk
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+rhObjects = IN[0]
+
+#Vector3d conversion function
+def rhVector3dToVector(rhVector):
+	VectorX = rhVector.X 
+	VectorY = rhVector.Y
+	VectorZ = rhVector.Z
+	dsVector = Vector.ByCoordinates(VectorX, VectorY, VectorZ)
+	return dsVector
+
+#3dPoint Conversion
+def rhPoint3dToPoint(rhPoint):
+	rhPointX = rhPoint.X
+	rhPointY = rhPoint.Y
+	rhPointZ = rhPoint.Z
+	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	return dsPoint
+	
+#Plane conversion function
+def rhPlaneToPlane(rhPlane):
+	normal = rhVector3dToVector(rhPlane.Normal)
+	origin = rhPoint3dToPoint(rhPlane.Origin)
+	dsPlane = Plane.ByOriginNormal(origin, normal)
+	return dsPlane
+
+#LineCurve conversion function
+def rhLineToLine(rhCurve):
+	rhStartPoint = rhCurve.PointAtStart
+	dsStartPoint = rhPoint3dToPoint(rhStartPoint)
+	rhEndPoint = rhCurve.PointAtEnd
+	dsEndPoint = rhPoint3dToPoint(rhEndPoint)
+	dsLine = Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
+	return dsLine
+
+#ArcCurve conversion function
+#Circle is considered ArcCurve so will be processed here
+def rhArcToArc(rhCurve):
+	if rhCurve.TryGetCircle()[0]:
+		rhCircle = rhCurve.TryGetCircle()[1]
+		radius = rhCircle.Radius
+		plane = rhPlaneToPlane(rhCircle.Plane)
+		dsCircle = Circle.ByPlaneRadius(plane, radius)
+		return dsCircle
+	elif rhCurve.TryGetArc()[0]:
+		rhArc = rhCurve.TryGetArc()[1]
+		rhStartPoint = rhArc.StartPoint
+		dsStartPoint = rhPoint3dToPoint(rhStartPoint)
+		rhEndPoint = rhArc.EndPoint
+		dsEndPoint = rhPoint3dToPoint(rhEndPoint)
+		rhCenter = rhArc.Center
+		dsCenter = rhPoint3dToPoint(rhCenter)
+		dsArc = Arc.ByCenterPointStartPointEndPoint(dsCenter, dsStartPoint, dsEndPoint)
+		return dsArc
+
+#NurbsCurve conversion function
+#Ellipse is considered NurbsCurve so it will be processed here
+def rhCurveToNurbsCurve(rhCurve):
+	if rhCurve.HasNurbsForm() == float(1):
+		rhCurve = rhCurve.ToNurbsCurve()
+		#get control points
+		ptArray, weights = [], []
+		knots = []
+		rhControlPoints = rhCurve.Points
+		for rhPoint in rhControlPoints:
+			rhPointX = rhPoint.Location.X
+			rhPointY = rhPoint.Location.Y
+			rhPointZ = rhPoint.Location.Z
+			dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+			ptArray.append(dsPoint)
+			#get weights for each point
+			weights.append(rhPoint.Weight)
+		#convert Python list to IEnumerable[]
+		ptArray = List[Point](ptArray)
+		weights = Array[float](weights)
+		#get degree of the curve
+		degree = rhCurve.Degree
+		#get knots of the curve
+		rhKnots = rhCurve.Knots
+		for i in rhKnots:
+			knots.append(i)
+		knots.insert(0, knots[0])
+		knots.insert(len(knots), knots[(len(knots)-1)])
+		knots = Array[float](knots)
+		#create ds curve from points, weights and knots
+		dsNurbsCurve = NurbsCurve.ByControlPointsWeightsKnots(ptArray, weights, knots, degree)
+		ptArray.Clear()
+		Array.Clear(weights, 0, len(weights))
+		Array.Clear(knots, 0, len(knots))
+		return dsNurbsCurve
+	
+#poly curve conversion function
+def rhCurveToPolyCurve(rhCurve):
+	ptArray = []
+	pCount = rhCurve.PointCount
+	for i in range(0, pCount):
+		dsPoint = rhPoint3dToPoint(rhCurve.Point(i))
+		ptArray.append(dsPoint)
+	dsPolyCurve = PolyCurve.ByPoints(ptArray)
+	ptArray = []
+	return dsPolyCurve
+
+#control point conversion function
+def rhControlPointToPoint(rhPoint):
+	rhPointX = rhPoint.Location.X
+	rhPointY = rhPoint.Location.Y
+	rhPointZ = rhPoint.Location.Z
+	dsControlPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	return dsControlPoint
+
+#check if object is a poly curve
+#if true convert to DS poly curve
+dsNurbsSurfaces = []
+dsControlPoints = []
+dsWeights = []
+dsKnotsU = []
+dsKnotsV = []
+for object in rhObjects:
+	if type(object.Geometry) == rc.Geometry.Brep:
+		brepFaces = object.Geometry.Faces
+		n = brepFaces.Count
+		for i in range(0, n, 1):
+			rhSurface = brepFaces.Item[i].UnderlyingSurface()
+			#get control points and weights
+			rhControlPoints = rhSurface.Points
+			for point in rhControlPoints:
+				dsControlPoints.append(rhControlPointToPoint(point))
+				dsWeights.append(point.Weight)
+			#get knotsU and knotsV
+			rhKnotsU = rhSurface.KnotsU
+			for i in rhKnotsU:
+				dsKnotsU.append(i)
+			dsKnotsU.insert(0, dsKnotsU[0])
+			dsKnotsU.insert(len(dsKnotsU), dsKnotsU[len(dsKnotsU)-1])
+			dsKnotsU = Array[float](dsKnotsU)
+			
+			rhKnotsV = rhSurface.KnotsV
+			for i in rhKnotsV:
+				dsKnotsV.append(i)
+			dsKnotsV.insert(0, dsKnotsV[0])
+			dsKnotsV.insert(len(dsKnotsV), dsKnotsV[len(dsKnotsV)-1])
+			dsKnotsV = Array[float](dsKnotsV)
+			#get uDegree and vDegree via order-1
+			dsDegreeU = (rhSurface.OrderU) - 1 
+			dsDegreeV = (rhSurface.OrderV) - 1
+			order0 = rhSurface.SpanCount(0)
+			order1 = rhSurface.SpanCount(1)
+			data = rhSurface.GetSpanVector(1)
+			
+			#dsNurbsSurface = NurbsSurface.ByControlPointsWeightsKnots(dsControlPoints, dsWeights, dsKnotsU, dsKnotsV, dsDegreeU, dsDegreeV)
+			#dsNurbsSurfaces.append(dsNurbsSurface)
+#Assign your output to the OUT variable
+OUT = data
