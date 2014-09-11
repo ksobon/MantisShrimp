@@ -1,0 +1,69 @@
+#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+RhinoIOPath = r'C:\Program Files\Dynamo 0.7'
+if RhinoIOPath not in sys.path:
+	sys.path.Add(RhinoIOPath)
+clr.AddReference('ProtoGeometry')
+clr.AddReferenceToFileAndPath(RhinoIOPath + r"\Rhino3dmIO.dll")
+from Autodesk.DesignScript.Geometry import *
+import Rhino as rc
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+rhObjects = IN[0]
+
+#Vector3d conversion function
+def rhVector3dToVector(rhVector):
+	VectorX = rhVector.X 
+	VectorY = rhVector.Y
+	VectorZ = rhVector.Z
+	dsVector = Vector.ByCoordinates(VectorX, VectorY, VectorZ)
+	return dsVector
+
+#3dPoint Conversion
+def rhPoint3dToPoint(rhPoint):
+	rhPointX = rhPoint.X
+	rhPointY = rhPoint.Y
+	rhPointZ = rhPoint.Z
+	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	return dsPoint
+	
+#Plane conversion function
+def rhPlaneToPlane(rhPlane):
+	normal = rhVector3dToVector(rhPlane.Normal)
+	origin = rhPoint3dToPoint(rhPlane.Origin)
+	dsPlane = Plane.ByOriginNormal(origin, normal)
+	return dsPlane
+
+#ArcCurve conversion function
+#Circle is considered ArcCurve so will be processed here
+def rhArcToArc(rhCurve):
+	if rhCurve.TryGetCircle()[0]:
+		rhCircle = rhCurve.TryGetCircle()[1]
+		radius = rhCircle.Radius
+		plane = rhPlaneToPlane(rhCircle.Plane)
+		dsCircle = Circle.ByPlaneRadius(plane, radius)
+		return dsCircle
+	elif rhCurve.TryGetArc()[0]:
+		rhArc = rhCurve.TryGetArc()[1]
+		rhStartPoint = rhArc.StartPoint
+		dsStartPoint = rhPoint3dToPoint(rhStartPoint)
+		rhEndPoint = rhArc.EndPoint
+		dsEndPoint = rhPoint3dToPoint(rhEndPoint)
+		rhCenter = rhArc.Center
+		dsCenter = rhPoint3dToPoint(rhCenter)
+		dsArc = Arc.ByCenterPointStartPointEndPoint(dsCenter, dsStartPoint, dsEndPoint)
+		return dsArc
+
+#check if object is an arc
+#if true convert to DS arc
+dsArcs = []
+for object in rhObjects:
+	if type(object.Geometry) == rc.Geometry.ArcCurve:
+		dsArcs.append(rhArcToArc(object.Geometry))
+
+#Assign your output to the OUT variable
+OUT = dsArcs
