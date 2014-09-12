@@ -169,9 +169,17 @@ for object in rhObjects:
 			vCount = rhSurface.SpanCount(1) + 3
 			#split control points into sublists of UV points
 			#convert list of lists to Array[Array[point]]
-			newControlPoints = [dsControlPoints[i:i+uCount] for i  in range(0, len(dsControlPoints), uCount)]
+			newControlPoints = [dsControlPoints[i:i+vCount] for i  in range(0, len(dsControlPoints), vCount)]
+			newWeights = [dsWeights[i:i+vCount] for i  in range(0, len(dsWeights), vCount)]
 			
-			dsNurbsSurface = NurbsSurface.ByControlPointsWeightsKnots(newControlPoints, dsWeights, dsKnotsU, dsKnotsV, dsDegreeU, dsDegreeV)
+			controlPointsArrayArray = Array.CreateInstance(Point, uCount, vCount)
+			weightsArrayArray = Array.CreateInstance(float, uCount, vCount)
+			
+			for i in range(0, uCount, 1):
+				for j in range(0, vCount, 1):
+					controlPointsArrayArray[i,j] = newControlPoints[i][j]
+					weightsArrayArray[i,j] = newWeights[i][j]
+			dsNurbsSurface = NurbsSurface.ByControlPointsWeightsKnots(controlPointsArrayArray, weightsArrayArray, dsKnotsU, dsKnotsV, dsDegreeU, dsDegreeV)
 			
 #Assign your output to the OUT variable
 OUT = dsNurbsSurface
