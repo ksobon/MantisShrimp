@@ -15,7 +15,6 @@ sys.path.append(pyt_path)
 
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
-import pickle
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
