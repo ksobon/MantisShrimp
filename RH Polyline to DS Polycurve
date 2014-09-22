@@ -47,8 +47,7 @@ def rhCurveToPolyCurve(rhCurve):
 	ptArray = []
 	return dsPolyCurve
 
-#check if object is a polyline curve
-#if true convert to DS polycurve
+#convert rhino/gh geometry to ds geometry
 dsPolyCurves = []
 for i in rhObjects:
 	dsPolyCurves.append(rhCurveToPolyCurve(i))
