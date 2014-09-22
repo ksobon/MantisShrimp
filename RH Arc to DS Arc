@@ -3,11 +3,16 @@
 
 import clr
 import sys
-RhinoIOPath = r'C:\Program Files\Dynamo 0.7'
-if RhinoIOPath not in sys.path:
-	sys.path.Add(RhinoIOPath)
 clr.AddReference('ProtoGeometry')
-clr.AddReferenceToFileAndPath(RhinoIOPath + r"\Rhino3dmIO.dll")
+
+RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
+if RhinoCommonPath not in sys.path:
+	sys.path.Add(RhinoCommonPath)
+clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
 
@@ -25,6 +30,10 @@ def rhVector3dToVector(rhVector):
 
 #3dPoint Conversion
 def rhPoint3dToPoint(rhPoint):
+	try:
+		rhPoint = rhPoint.Geometry
+	except:
+		pass
 	rhPointX = rhPoint.X
 	rhPointY = rhPoint.Y
 	rhPointZ = rhPoint.Z
@@ -38,9 +47,13 @@ def rhPlaneToPlane(rhPlane):
 	dsPlane = Plane.ByOriginNormal(origin, normal)
 	return dsPlane
 
-#ArcCurve conversion function
-#Circle is considered ArcCurve so will be processed here
+#Circle is considered ArcCurve
+#circle conversion function
 def rhArcToArc(rhCurve):
+	try:
+		rhCurve = rhCurve.Geometry
+	except:
+		pass
 	if rhCurve.TryGetCircle()[0]:
 		rhCircle = rhCurve.TryGetCircle()[1]
 		radius = rhCircle.Radius
@@ -58,12 +71,10 @@ def rhArcToArc(rhCurve):
 		dsArc = Arc.ByCenterPointStartPointEndPoint(dsCenter, dsStartPoint, dsEndPoint)
 		return dsArc
 
-#check if object is an arc
-#if true convert to DS arc
+#convert rhino/gh geometry to ds geometry
 dsArcs = []
-for object in rhObjects:
-	if type(object.Geometry) == rc.Geometry.ArcCurve:
-		dsArcs.append(rhArcToArc(object.Geometry))
+for i in rhObjects:
+	dsArcs.append(rhArcToArc(i))
 
 #Assign your output to the OUT variable
 OUT = dsArcs
