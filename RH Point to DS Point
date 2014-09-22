@@ -32,8 +32,7 @@ def rhPointToPoint(rhPoint):
 	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 	return dsPoint
 
-#check if object is a point
-#if true convert to DS Point
+#convert rhino/gh geometry to ds geometry
 dsPoints = []
 for i in rhObjects:
 	dsPoints.append(rhPointToPoint(i))
