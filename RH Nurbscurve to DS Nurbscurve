@@ -3,11 +3,16 @@
 
 import clr
 import sys
-RhinoIOPath = r'C:\Program Files\Dynamo 0.7'
-if RhinoIOPath not in sys.path:
-	sys.path.Add(RhinoIOPath)
 clr.AddReference('ProtoGeometry')
-clr.AddReferenceToFileAndPath(RhinoIOPath + r"\Rhino3dmIO.dll")
+
+RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
+if RhinoCommonPath not in sys.path:
+	sys.path.Add(RhinoCommonPath)
+clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
 
@@ -18,9 +23,25 @@ from System.Collections.Generic import *
 dataEnteringNode = IN
 rhObjects = IN[0]
 
+#point/control point conversion function
+def rhPointToPoint(rhPoint):
+	try:
+		rhPoint = rhPoint.Geometry
+	except:
+		pass
+	rhPointX = rhPoint.Location.X
+	rhPointY = rhPoint.Location.Y
+	rhPointZ = rhPoint.Location.Z
+	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	return dsPoint
+
 #NurbsCurve conversion function
 #Ellipse is considered NurbsCurve so it will be processed here
 def rhCurveToNurbsCurve(rhCurve):
+	try:
+		rhCurve = rhCurve.Geometry
+	except:
+		pass
 	if rhCurve.HasNurbsForm() == float(1):
 		rhCurve = rhCurve.ToNurbsCurve()
 		#get control points
@@ -28,10 +49,7 @@ def rhCurveToNurbsCurve(rhCurve):
 		knots = []
 		rhControlPoints = rhCurve.Points
 		for rhPoint in rhControlPoints:
-			rhPointX = rhPoint.Location.X
-			rhPointY = rhPoint.Location.Y
-			rhPointZ = rhPoint.Location.Z
-			dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+			dsPoint = rhPointToPoint(rhPoint)
 			ptArray.append(dsPoint)
 			#get weights for each point
 			weights.append(rhPoint.Weight)
@@ -54,13 +72,10 @@ def rhCurveToNurbsCurve(rhCurve):
 		Array.Clear(knots, 0, len(knots))
 		return dsNurbsCurve
 
-#check if object is a nurbs curve
-#if true convert to DS nurbscurve
+#convert rhino/gh geometry to ds geometry
 dsNurbsCurves = []
-ptArray = []
-for object in rhObjects:
-	if type(object.Geometry) == rc.Geometry.NurbsCurve:
-		dsNurbsCurves.append(rhCurveToNurbsCurve(object.Geometry))
+for i in rhObjects:
+	dsNurbsCurves.append(rhCurveToNurbsCurve(i))
 
 #Assign your output to the OUT variable
 OUT = dsNurbsCurves
