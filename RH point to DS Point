@@ -3,11 +3,7 @@
 
 import clr
 import sys
-RhinoIOPath = r'C:\Program Files\Dynamo 0.7'
-if RhinoIOPath not in sys.path:
-	sys.path.Add(RhinoIOPath)
 clr.AddReference('ProtoGeometry')
-clr.AddReferenceToFileAndPath(RhinoIOPath + r"\Rhino3dmIO.dll")
 
 RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
 if RhinoCommonPath not in sys.path:
@@ -27,8 +23,10 @@ rhObjects = IN[0]
 
 #point/control point conversion function
 def rhPointToPoint(rhPoint):
-	if type(rhPoint) == rc.FileIO.File3dmObject:
+	try:
 		rhPoint = rhPoint.Geometry
+	except:
+		pass
 	rhPointX = rhPoint.Location.X
 	rhPointY = rhPoint.Location.Y
 	rhPointZ = rhPoint.Location.Z
@@ -40,6 +38,5 @@ def rhPointToPoint(rhPoint):
 dsPoints = []
 for i in rhObjects:
 	dsPoints.append(rhPointToPoint(i))
-
 #Assign your output to the OUT variable
 OUT = dsPoints
