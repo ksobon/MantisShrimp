@@ -22,10 +22,6 @@ rhObjects = IN[0]
 
 #point/control point conversion function
 def rhPointToPoint(rhPoint):
-	try:
-		rhPoint = rhPoint.Geometry
-	except:
-		pass
 	rhPointX = rhPoint.Location.X
 	rhPointY = rhPoint.Location.Y
 	rhPointZ = rhPoint.Location.Z
@@ -35,6 +31,12 @@ def rhPointToPoint(rhPoint):
 #convert rhino/gh geometry to ds geometry
 dsPoints = []
 for i in rhObjects:
-	dsPoints.append(rhPointToPoint(i))
+	try:
+		i = i.Geometry
+	except:
+		pass
+	if i.ToString() == "Rhino.Geometry.Point":
+		dsPoints.append(rhPointToPoint(i))
+
 #Assign your output to the OUT variable
 OUT = dsPoints
