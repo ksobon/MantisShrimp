@@ -44,7 +44,7 @@ def rhPlaneToPlane(rhPlane):
 	return dsPlane
 
 #circle conversion function
-def rhArcToArc(rhCurve):
+def rhCircleToCircle(rhCurve):
 	rhCircle = rhCurve.TryGetCircle()[1]
 	radius = rhCircle.Radius
 	plane = rhPlaneToPlane(rhCircle.Plane)
