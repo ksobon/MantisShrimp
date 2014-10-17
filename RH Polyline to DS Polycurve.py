@@ -22,10 +22,6 @@ rhObjects = IN[0]
 
 #3dPoint Conversion
 def rhPoint3dToPoint(rhPoint):
-	try:
-		rhPoint = rhPoint.Geometry
-	except:
-		pass
 	rhPointX = rhPoint.X
 	rhPointY = rhPoint.Y
 	rhPointZ = rhPoint.Z
@@ -34,23 +30,24 @@ def rhPoint3dToPoint(rhPoint):
 
 #poly curve conversion function
 def rhCurveToPolyCurve(rhCurve):
-	try:
-		rhCurve = rhCurve.Geometry
-	except:
-		pass
 	ptArray = []
 	pCount = rhCurve.PointCount
 	for i in range(0, pCount):
 		dsPoint = rhPoint3dToPoint(rhCurve.Point(i))
 		ptArray.append(dsPoint)
 	dsPolyCurve = PolyCurve.ByPoints(ptArray)
-	ptArray = []
+	del ptArray[:]
 	return dsPolyCurve
 
 #convert rhino/gh geometry to ds geometry
 dsPolyCurves = []
 for i in rhObjects:
-	dsPolyCurves.append(rhCurveToPolyCurve(i))
+	try:
+		i = i.Geometry
+	except:
+		pass
+	if i.ToString() == "Rhino.Geometry.PolylineCurve":
+		dsPolyCurves.append(rhCurveToPolyCurve(i))
 
 #Assign your output to the OUT variable
 OUT = dsPolyCurves
