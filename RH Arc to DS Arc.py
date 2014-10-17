@@ -30,10 +30,6 @@ def rhVector3dToVector(rhVector):
 
 #3dPoint Conversion
 def rhPoint3dToPoint(rhPoint):
-	try:
-		rhPoint = rhPoint.Geometry
-	except:
-		pass
 	rhPointX = rhPoint.X
 	rhPointY = rhPoint.Y
 	rhPointZ = rhPoint.Z
@@ -47,34 +43,23 @@ def rhPlaneToPlane(rhPlane):
 	dsPlane = Plane.ByOriginNormal(origin, normal)
 	return dsPlane
 
-#Circle is considered ArcCurve
-#circle conversion function
-def rhArcToArc(rhCurve):
-	try:
-		rhCurve = rhCurve.Geometry
-	except:
-		pass
-	if rhCurve.TryGetCircle()[0]:
-		rhCircle = rhCurve.TryGetCircle()[1]
-		radius = rhCircle.Radius
-		plane = rhPlaneToPlane(rhCircle.Plane)
-		dsCircle = Circle.ByPlaneRadius(plane, radius)
-		return dsCircle
-	elif rhCurve.TryGetArc()[0]:
-		rhArc = rhCurve.TryGetArc()[1]
-		rhStartPoint = rhArc.StartPoint
-		dsStartPoint = rhPoint3dToPoint(rhStartPoint)
-		rhEndPoint = rhArc.EndPoint
-		dsEndPoint = rhPoint3dToPoint(rhEndPoint)
-		rhCenter = rhArc.Center
-		dsCenter = rhPoint3dToPoint(rhCenter)
-		dsArc = Arc.ByCenterPointStartPointEndPoint(dsCenter, dsStartPoint, dsEndPoint)
-		return dsArc
+#arc conversion function
+def rhArcToArc(rhArc):
+	dsStartPoint = rhPoint3dToPoint(rhArc.Arc.StartPoint)
+	dsEndPoint = rhPoint3dToPoint(rhArc.Arc.EndPoint)
+	dsCenter = rhPoint3dToPoint(rhArc.Arc.Center)
+	dsArc = Arc.ByCenterPointStartPointEndPoint(dsCenter, dsStartPoint, dsEndPoint)
+	return dsArc
 
 #convert rhino/gh geometry to ds geometry
 dsArcs = []
 for i in rhObjects:
-	dsArcs.append(rhArcToArc(i))
+	try:
+		i = i.Geometry
+	except:
+		pass
+	if i.ToString() == "Rhino.Geometry.ArcCurve" and i.IsArc():
+		dsArcs.append(rhArcToArc(i))
 
 #Assign your output to the OUT variable
 OUT = dsArcs
