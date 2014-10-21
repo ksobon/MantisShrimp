@@ -1,0 +1,299 @@
+#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+clr.AddReference('ProtoGeometry')
+
+RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
+if RhinoCommonPath not in sys.path:
+	sys.path.Add(RhinoCommonPath)
+clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
+from Autodesk.DesignScript.Geometry import *
+from System import Array
+from System.Collections.Generic import *
+import Rhino as rc
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+rhObjects = IN[0]
+
+#Vector3d conversion function
+def rhVector3dToVector(rhVector):
+	VectorX = rhVector.X 
+	VectorY = rhVector.Y
+	VectorZ = rhVector.Z
+	dsVector = Vector.ByCoordinates(VectorX, VectorY, VectorZ)
+	return dsVector
+
+#3dPoint Conversion
+def rhPoint3dToPoint(rhPoint):
+	rhPointX = rhPoint.X
+	rhPointY = rhPoint.Y
+	rhPointZ = rhPoint.Z
+	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	return dsPoint
+
+#point/control point conversion function
+def rhPointToPoint(rhPoint):
+	rhPointX = rhPoint.Location.X
+	rhPointY = rhPoint.Location.Y
+	rhPointZ = rhPoint.Location.Z
+	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	return dsPoint
+
+#Plane conversion function
+def rhPlaneToPlane(rhPlane):
+	normal = rhVector3dToVector(rhPlane.Normal)
+	origin = rhPoint3dToPoint(rhPlane.Origin)
+	dsPlane = Plane.ByOriginNormal(origin, normal)
+	return dsPlane
+
+#Line conversion function
+def rhLineToLine(rhLine):
+	dsStartPoint = rhPoint3dToPoint(rhLine.From)
+	dsEndPoint = rhPoint3dToPoint(rhLine.To)
+	dsLine = Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
+	return dsLine
+#LineCurve conversion function
+def rhLineCurveToLine(rhCurve):
+	rhStartPoint = rhCurve.PointAtStart
+	dsStartPoint = rhPoint3dToPoint(rhStartPoint)
+	rhEndPoint = rhCurve.PointAtEnd
+	dsEndPoint = rhPoint3dToPoint(rhEndPoint)
+	dsLine = Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
+	return dsLine
+
+#arc conversion function
+def rhArcToArc(rhArc):
+	dsStartPoint = rhPoint3dToPoint(rhArc.StartPoint)
+	dsEndPoint = rhPoint3dToPoint(rhArc.EndPoint)
+	dsCenter = rhPoint3dToPoint(rhArc.Center)
+	dsArc = Arc.ByCenterPointStartPointEndPoint(dsCenter, dsStartPoint, dsEndPoint)
+	return dsArc
+
+#multi span nurbs curve comversion function
+def rhMultiSpanNurbsCurveToCurve(rhCurve):
+	dsNurbsCurve, rhSubCurve = [], []
+	spanCount = rhCurve.SpanCount
+	for i in range(0, spanCount, 1):
+		rhCurveSubdomain = rhCurve.SpanDomain(i)
+		rhSubCurve.append(rhCurve.ToNurbsCurve(rhCurveSubdomain))
+	for curve in rhSubCurve:
+		#get control points
+		ptArray, weights, knots = [], [], []
+		rhControlPoints = curve.Points
+		for rhPoint in rhControlPoints:
+			dsPoint = rhPointToPoint(rhPoint)
+			ptArray.append(dsPoint)
+			#get weights for each point
+			weights.append(rhPoint.Weight)
+		#convert Python list to IEnumerable[]
+		ptArray = List[Point](ptArray)
+		weights = Array[float](weights)
+		#get degree of the curve
+		degree = curve.Degree
+		#get knots of the curve
+		rhKnots = curve.Knots
+		for i in rhKnots:
+			knots.append(i)
+		knots.insert(0, knots[0])
+		knots.insert(len(knots), knots[(len(knots)-1)])
+		knots = Array[float](knots)
+		#create ds curve from points, weights and knots
+		dsNurbsCurve.append(NurbsCurve.ByControlPointsWeightsKnots(ptArray, weights, knots, degree))
+		curveArray = List[Curve](dsNurbsCurve)
+		polyCurve = PolyCurve.ByJoinedCurves(curveArray)
+		curveArray.Clear()
+		ptArray.Clear()
+		Array.Clear(weights, 0, len(weights))
+		Array.Clear(knots, 0, len(knots))
+		
+	return polyCurve
+	del dsNurbsCurve[:]
+
+#single span nurbs curve conversion function
+def rhSingleSpanNurbsCurveToCurve(rhCurve):		
+	#get control points
+	ptArray, weights, knots = [], [], []
+	rhControlPoints = rhCurve.Points
+	for rhPoint in rhControlPoints:
+		dsPoint = rhPointToPoint(rhPoint)
+		ptArray.append(dsPoint)
+		#get weights for each point
+		weights.append(rhPoint.Weight)
+	#convert Python list to IEnumerable[]
+	ptArray = List[Point](ptArray)
+	weights = Array[float](weights)
+	#get degree of the curve
+	degree = rhCurve.Degree
+	#get knots of the curve
+	rhKnots = rhCurve.Knots
+	for i in rhKnots:
+		knots.append(i)
+	knots.insert(0, knots[0])
+	knots.insert(len(knots), knots[(len(knots)-1)])
+	knots = Array[float](knots)
+	#create ds curve from points, weights and knots
+	dsNurbsCurve = NurbsCurve.ByControlPointsWeightsKnots(ptArray, weights, knots, degree)
+	ptArray.Clear()
+	Array.Clear(weights, 0, len(weights))
+	Array.Clear(knots, 0, len(knots))
+	return dsNurbsCurve
+
+#polyline conversion function
+def rhPolylineToPolyCurve(rhCurve):
+	segments = rhCurve.GetSegments()
+	lineArray = List[Curve]()
+	for i in segments:
+		lineArray.Add(rhLineToLine(i))
+	dsPolyline = PolyCurve.ByJoinedCurves(lineArray)
+	lineArray.Clear()
+	return dsPolyline
+
+#poly curve conversion function
+def rhCurveToPolyCurve(rhCurve):
+	ptArray = []
+	pCount = rhCurve.PointCount
+	for i in range(0, pCount):
+		dsPoint = rhPoint3dToPoint(rhCurve.Point(i))
+		ptArray.append(dsPoint)
+	dsPolyCurve = PolyCurve.ByPoints(ptArray)
+	del ptArray[:]
+	return dsPolyCurve
+
+#rh polycurve conversion function
+def rhPolyCurveToPolyCurve(rhCurve):
+	dsSubCurves = []
+	segmentCount = rhCurve.SegmentCount
+	for i in range(0, segmentCount, 1):
+		curve = rhCurve.SegmentCurve(i)
+		if curve.ToString() == "Rhino.Geometry.LineCurve":
+			dsSubCurves.append(rhLineToLine(curve))
+		elif curve.ToString() == "Rhino.Geometry.PolylineCurve":
+			dsSubCurves.append(rhCurveToPolyCurve(curve))
+		elif curve.ToString() == "Rhino.Geometry.ArcCurve":
+			dsSubCurves.append(rhArcToArc(curve))
+		elif curve.ToString() == "Rhino.Geometry.NurbsCurve" and curve.SpanCount == 1:
+			dsSubCurves.append(rhSingleSpanNurbsCurveToCurve(curve))
+		elif curve.ToString() == "Rhino.Geometry.NurbsCurve" and curve.SpanCount > 1:
+			multiSpanCurves = rhMultiSpanNurbsCurveToCurve(curve)
+			for curve in multiSpanCurves:
+				dsSubCurves.append(curve)
+		elif curve.ToString() == "Rhino.Geometry.PolyCurve":
+			subPolyCurves = rhMultiSpanNurbsCurveToCurve(curve.ToNurbsCurve())
+			for curve in subPolyCurves:
+				dsSubCurves.append(curve)
+	dsPolyCurve = PolyCurve.ByJoinedCurves(dsSubCurves)
+	del dsSubCurves[:]
+	return dsPolyCurve
+
+#brep/nurbs surface conversion function
+def rhNurbsSurfaceToSurface(rhNurbsSurface):
+	dsNurbsSurfaces = []
+	dsControlPoints = []
+	dsWeights = []
+	#get control points and weights
+	rhControlPoints = rhNurbsSurface.Points
+	for point in rhControlPoints:
+		dsControlPoints.append(rhPointToPoint(point))
+		dsWeights.append(point.Weight)
+	#get knotsU and knotsV
+	rhKnotsU = rhNurbsSurface.KnotsU
+	dsKnotsU = []
+	for i in rhKnotsU:
+		dsKnotsU.append(i)
+	dsKnotsU.insert(0, dsKnotsU[0])
+	dsKnotsU.insert(len(dsKnotsU), dsKnotsU[len(dsKnotsU)-1])
+	dsKnotsU = Array[float](dsKnotsU)
+	rhKnotsV = rhNurbsSurface.KnotsV
+	dsKnotsV = []
+	for i in rhKnotsV:
+		dsKnotsV.append(i)
+	dsKnotsV.insert(0, dsKnotsV[0])
+	dsKnotsV.insert(len(dsKnotsV), dsKnotsV[len(dsKnotsV)-1])
+	dsKnotsV = Array[float](dsKnotsV)
+	#get uDegree and vDegree via order-1
+	dsDegreeU = (rhNurbsSurface.OrderU) - 1 
+	dsDegreeV = (rhNurbsSurface.OrderV) - 1
+	#compute number of UV Control points
+	uCount = rhNurbsSurface.SpanCount(0) + 3
+	vCount = rhNurbsSurface.SpanCount(1) + 3
+	#split control points into sublists of UV points
+	#convert list of lists to Array[Array[point]]
+	newControlPoints = [dsControlPoints[i:i+vCount] for i  in range(0, len(dsControlPoints), vCount)]
+	newWeights = [dsWeights[i:i+vCount] for i  in range(0, len(dsWeights), vCount)]
+
+	weightsArrayArray = Array[Array[float]](map(tuple, newWeights))
+	controlPointsArrayArray = Array[Array[Point]](map(tuple, newControlPoints))
+	#create ds nurbs surface
+	dsNurbsSurface = NurbsSurface.ByControlPointsWeightsKnots(controlPointsArrayArray, weightsArrayArray, dsKnotsU, dsKnotsV, dsDegreeU, dsDegreeV)
+	return dsNurbsSurface
+
+def groupCurves(Line_List): 
+	ignore_distance = 0.1 # Assume points this close or closer to each other are touching 
+	Grouped_Lines = [] 
+	Queue = set() 
+	while Line_List: 
+		Shape = [] 
+		Queue.add(Line_List.pop()) # Move a line from the Line_List to our queue 
+		while Queue: 
+			Current_Line = Queue.pop() 
+			Shape.append(Current_Line) 
+			for Potential_Match in Line_List: 
+				Points = (Potential_Match.StartPoint, Potential_Match.EndPoint)
+				for P1 in Points: 
+					for P2 in (Current_Line.StartPoint, Current_Line.EndPoint): 
+						distance = P1.DistanceTo(P2) 
+						if distance <= ignore_distance: 
+							Queue.add(Potential_Match) 
+			Line_List -= Queue 
+		Grouped_Lines.append(Shape) 
+	return Grouped_Lines
+
+#convert rhino/gh geometry to ds geometry
+dsSurface = []
+for brep in rhObjects:
+	dsSubCurves, faceIndicies, trimLoops, dsFaces, trimLoop  = [], [], [], [], []
+	trims = brep.Trims
+	for i in trims:
+		if i.Face.FaceIndex not in faceIndicies:
+			faceIndicies.append(i.Face.FaceIndex)
+		if i.TrimType == rc.Geometry.BrepTrimType.Boundary:
+			edgeIndex = i.Edge.EdgeIndex
+			edge = brep.Edges.Item[edgeIndex]
+			if edge.ObjectType.ToString() == "Curve" and edge.SpanCount > 1:
+				dsSubCurves.append(rhMultiSpanNurbsCurveToCurve(edge))
+			elif edge.ObjectType.ToString() == "Curve" and edge.SpanCount == 1:
+				if edge.IsArc():
+					arc = edge.TryGetArc()
+					dsSubCurves.append(rhArcToArc(arc[1]))
+				elif edge.IsPolyline():
+					polyline = edge.TryGetPolyline()
+					dsSubCurves.append(rhPolylineToPolyCurve(polyline[1]))
+				else:
+					dsSubCurves.append(rhSingleSpanNurbsCurveToCurve(edge.ToNurbsCurve()))
+	for index in faceIndicies:
+		dsFaces.append(rhNurbsSurfaceToSurface(brep.Faces.Item[index].ToNurbsSurface()))
+	try:
+		curveArray = List[Curve](dsSubCurves)
+		trimLoop.append(PolyCurve.ByJoinedCurves(curveArray))
+	except:
+		pass
+	if len(trimLoop) != 0:
+		dsSurface.append(dsFaces[0].TrimWithEdgeLoops(trimLoop))
+		del dsSubCurves[:]
+	else:
+		subCurveSet = set(dsSubCurves)
+		groupedCurves = groupCurves(subCurveSet)
+		for i in groupedCurves:
+			curveArray = List[Curve](i)
+			trimLoops.append(PolyCurve.ByJoinedCurves(curveArray))
+		dsSurface.append(dsFaces[0].TrimWithEdgeLoops(trimLoops))
+		del dsSubCurves[:]
+		del groupedCurves[:]
+OUT = dsSurface
