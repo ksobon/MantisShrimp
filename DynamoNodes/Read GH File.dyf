@@ -1,0 +1,61 @@
+<Workspace Version="0.7.2.9146" X="207.370905193608" Y="160.665146472158" zoom="1.545620359375" Description="Reads the file exported from Grasshopper (serializes it back into relevant Rhino geometry such as surfaces, points etc)" Category="Archi-lab_MantisShrimp.ReadGrasshopper" Name="Read GH File" ID="9648a159-7814-46f6-9097-16f1f9d27ec8">
+  <Elements>
+    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="65fdab90-38f4-4bf7-a1d6-115d2bf34e5f" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
+      <Script>#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+clr.AddReference('ProtoGeometry')
+
+RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
+if RhinoCommonPath not in sys.path:
+	sys.path.Add(RhinoCommonPath)
+clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
+from Autodesk.DesignScript.Geometry import *
+from System import Array
+from System.Collections.Generic import *
+import Rhino as rc
+import pickle
+
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+filePath = str(IN[0])
+
+class SerializeObjects(object):
+	def __init__(self, filePath, data = None):
+		self.filePath = filePath
+		self.data = data
+
+	def saveToFile(self):
+		with open(self.filePath, 'wb') as outf:
+			pickle.dump(self.data, outf)
+
+	def readFromFile(self):
+		with open(self.filePath, 'rb') as inf:
+			self.data = pickle.load(inf)
+
+serializer = SerializeObjects(filePath)
+serializer.readFromFile()
+
+#Assign your output to the OUT variable
+OUT = serializer.data</Script>
+    </DSIronPythonNode.PythonNode>
+    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="23e6a7a9-90fa-4195-9ac3-1bff7bb3151a" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="File Path" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="d2c0fb80-3f6c-4b96-a156-d977fde76b28" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Rhino Object(s)" />
+    </Dynamo.Nodes.Output>
+  </Elements>
+  <Connectors>
+    <Dynamo.Models.ConnectorModel start="65fdab90-38f4-4bf7-a1d6-115d2bf34e5f" start_index="0" end="d2c0fb80-3f6c-4b96-a156-d977fde76b28" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="23e6a7a9-90fa-4195-9ac3-1bff7bb3151a" start_index="0" end="65fdab90-38f4-4bf7-a1d6-115d2bf34e5f" end_index="0" portType="0" />
+  </Connectors>
+  <Notes />
+</Workspace>
