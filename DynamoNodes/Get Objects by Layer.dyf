@@ -1,0 +1,46 @@
+<Workspace Version="0.7.2.24887" X="199.4325" Y="152.115" zoom="1.1575" Description="Queries all Rhino objects on a given layer." Category="Archi-lab_MantisShrimp.ReadRhino" Name="Get Objects by Layer" ID="b36398a3-e877-4497-90ca-e9f36ae05a83">
+  <Elements>
+    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="e4b0ad4b-8dcb-48f5-ac5b-91c68cf373bc" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="2">
+      <Script>#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+clr.AddReference('ProtoGeometry')
+
+RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
+if RhinoCommonPath not in sys.path:
+	sys.path.Add(RhinoCommonPath)
+clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
+import Rhino as rc
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+rhModel = IN[0]
+rhLayer = IN[1]
+
+#get objects by layer
+#Assign your output to the OUT variable
+OUT = rhModel.Objects.FindByLayer(rhLayer)</Script>
+    </DSIronPythonNode.PythonNode>
+    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="a12b081b-771c-4b14-94ca-1f9be52e5924" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Rhino File" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="31e50648-3759-4956-a525-55c48a8393f9" nickname="Input" x="0" y="150" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Rhino Layer" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="6011e715-d499-4834-b8ba-697d62712815" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Rhino Object(s)" />
+    </Dynamo.Nodes.Output>
+  </Elements>
+  <Connectors>
+    <Dynamo.Models.ConnectorModel start="e4b0ad4b-8dcb-48f5-ac5b-91c68cf373bc" start_index="0" end="6011e715-d499-4834-b8ba-697d62712815" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="a12b081b-771c-4b14-94ca-1f9be52e5924" start_index="0" end="e4b0ad4b-8dcb-48f5-ac5b-91c68cf373bc" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="31e50648-3759-4956-a525-55c48a8393f9" start_index="0" end="e4b0ad4b-8dcb-48f5-ac5b-91c68cf373bc" end_index="1" portType="0" />
+  </Connectors>
+  <Notes />
+</Workspace>

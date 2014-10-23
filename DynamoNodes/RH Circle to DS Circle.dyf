@@ -1,0 +1,82 @@
+<Workspace Version="0.7.2.24887" X="0" Y="0" zoom="1" Description="Converts Rhino Circle to Design Script circle. Keep in mind that OpenNURBS has limited ability to expose Ellipse and Circle methods so not all &quot;circles&quot; will be able to pass this node." Category="Archi-lab_MantisShrimp.ReadRhino" Name="RH Circle to DS Circle" ID="353421b8-6f34-44ed-a567-32644be6a704">
+  <Elements>
+    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="6fc850f2-1755-4c74-b16d-5e36051c091a" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
+      <Script>#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+clr.AddReference('ProtoGeometry')
+
+RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
+if RhinoCommonPath not in sys.path:
+	sys.path.Add(RhinoCommonPath)
+clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
+from Autodesk.DesignScript.Geometry import *
+import Rhino as rc
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+rhObjects = IN[0]
+
+#Vector3d conversion function
+def rhVector3dToVector(rhVector):
+	VectorX = rhVector.X 
+	VectorY = rhVector.Y
+	VectorZ = rhVector.Z
+	dsVector = Vector.ByCoordinates(VectorX, VectorY, VectorZ)
+	return dsVector
+
+#3dPoint Conversion
+def rhPoint3dToPoint(rhPoint):
+	rhPointX = rhPoint.X
+	rhPointY = rhPoint.Y
+	rhPointZ = rhPoint.Z
+	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	return dsPoint
+	
+#Plane conversion function
+def rhPlaneToPlane(rhPlane):
+	normal = rhVector3dToVector(rhPlane.Normal)
+	origin = rhPoint3dToPoint(rhPlane.Origin)
+	dsPlane = Plane.ByOriginNormal(origin, normal)
+	return dsPlane
+
+#circle conversion function
+def rhCircleToCircle(rhCurve):
+	rhCircle = rhCurve.TryGetCircle()[1]
+	radius = rhCircle.Radius
+	plane = rhPlaneToPlane(rhCircle.Plane)
+	dsCircle = Circle.ByPlaneRadius(plane, radius)
+	return dsCircle
+
+#convert rhino/gh geometry to ds geometry
+dsCircles = []
+for i in rhObjects:
+	try:
+		i = i.Geometry
+	except:
+		pass
+	if i.ToString() == "Rhino.Geometry.ArcCurve" and i.IsCircle():
+		dsCircles.append(rhArcToArc(i))
+
+#Assign your output to the OUT variable
+OUT = dsCircles</Script>
+    </DSIronPythonNode.PythonNode>
+    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="7da875a9-aa00-4ec5-9501-8c77c5588030" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Rhino Object(s)" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="983bc7f0-0b10-42be-8332-325bedb19378" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Circle(s)" />
+    </Dynamo.Nodes.Output>
+  </Elements>
+  <Connectors>
+    <Dynamo.Models.ConnectorModel start="6fc850f2-1755-4c74-b16d-5e36051c091a" start_index="0" end="983bc7f0-0b10-42be-8332-325bedb19378" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="7da875a9-aa00-4ec5-9501-8c77c5588030" start_index="0" end="6fc850f2-1755-4c74-b16d-5e36051c091a" end_index="0" portType="0" />
+  </Connectors>
+  <Notes />
+</Workspace>

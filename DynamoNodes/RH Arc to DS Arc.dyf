@@ -1,0 +1,82 @@
+<Workspace Version="0.7.2.24887" X="205" Y="84" zoom="1" Description="Converts Rhino arcs to Design Script arcs." Category="Archi-lab_MantisShrimp.ReadRhino" Name="RH Arc to DS Arc" ID="424069e1-9c5e-4599-b2ae-bd48dad51328">
+  <Elements>
+    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="a766192e-1279-42be-a6b3-b74822397737" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
+      <Script>#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+clr.AddReference('ProtoGeometry')
+
+RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
+if RhinoCommonPath not in sys.path:
+	sys.path.Add(RhinoCommonPath)
+clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
+from Autodesk.DesignScript.Geometry import *
+import Rhino as rc
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+rhObjects = IN[0]
+
+#Vector3d conversion function
+def rhVector3dToVector(rhVector):
+	VectorX = rhVector.X 
+	VectorY = rhVector.Y
+	VectorZ = rhVector.Z
+	dsVector = Vector.ByCoordinates(VectorX, VectorY, VectorZ)
+	return dsVector
+
+#3dPoint Conversion
+def rhPoint3dToPoint(rhPoint):
+	rhPointX = rhPoint.X
+	rhPointY = rhPoint.Y
+	rhPointZ = rhPoint.Z
+	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	return dsPoint
+	
+#Plane conversion function
+def rhPlaneToPlane(rhPlane):
+	normal = rhVector3dToVector(rhPlane.Normal)
+	origin = rhPoint3dToPoint(rhPlane.Origin)
+	dsPlane = Plane.ByOriginNormal(origin, normal)
+	return dsPlane
+
+#arc conversion function
+def rhArcToArc(rhArc):
+	dsStartPoint = rhPoint3dToPoint(rhArc.Arc.StartPoint)
+	dsEndPoint = rhPoint3dToPoint(rhArc.Arc.EndPoint)
+	dsCenter = rhPoint3dToPoint(rhArc.Arc.Center)
+	dsArc = Arc.ByCenterPointStartPointEndPoint(dsCenter, dsStartPoint, dsEndPoint)
+	return dsArc
+
+#convert rhino/gh geometry to ds geometry
+dsArcs = []
+for i in rhObjects:
+	try:
+		i = i.Geometry
+	except:
+		pass
+	if i.ToString() == "Rhino.Geometry.ArcCurve" and i.IsArc():
+		dsArcs.append(rhArcToArc(i))
+
+#Assign your output to the OUT variable
+OUT = dsArcs</Script>
+    </DSIronPythonNode.PythonNode>
+    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="2fc6cbf7-3c2a-473e-a0dd-9e2c1bbc6335" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Rhino Object(s)" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="3f6534da-6342-46b3-8934-f435ba56af26" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Arc(s)" />
+    </Dynamo.Nodes.Output>
+  </Elements>
+  <Connectors>
+    <Dynamo.Models.ConnectorModel start="a766192e-1279-42be-a6b3-b74822397737" start_index="0" end="3f6534da-6342-46b3-8934-f435ba56af26" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="2fc6cbf7-3c2a-473e-a0dd-9e2c1bbc6335" start_index="0" end="a766192e-1279-42be-a6b3-b74822397737" end_index="0" portType="0" />
+  </Connectors>
+  <Notes />
+</Workspace>

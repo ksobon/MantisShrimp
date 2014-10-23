@@ -1,0 +1,45 @@
+<Workspace Version="0.7.2.24887" X="172.7355125" Y="80.60326875" zoom="1.33823125" Description="Queries Rhino file and extracts layers." Category="Archi-lab_MantisShrimp.ReadRhino" Name="Get Rhino Layers" ID="6d1e9bd9-a8eb-49a1-ba9d-641a1c41ef73">
+  <Elements>
+    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="929f980f-8677-4220-ba09-5e657d7ba225" nickname="Python Script" x="222.351564798685" y="0.747255005440962" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
+      <Script>#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+clr.AddReference('ProtoGeometry')
+
+RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
+if RhinoCommonPath not in sys.path:
+	sys.path.Add(RhinoCommonPath)
+clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
+import Rhino as rc
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+rhModel = IN[0]
+
+#extract layer names from 3dm file
+rhLayers = []
+for i in rhModel.Layers:
+	rhLayers.append(i.Name)
+
+#Assign your output to the OUT variable
+OUT = rhLayers</Script>
+    </DSIronPythonNode.PythonNode>
+    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="f4a13f5a-c4d0-4cc9-ba02-b18cf7755b51" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Rhino File" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="a9a49e6d-b7c7-4078-a413-00a4a4e027a4" nickname="Output" x="426.582349836772" y="1.4945100108819" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Rhino Layer(s)" />
+    </Dynamo.Nodes.Output>
+  </Elements>
+  <Connectors>
+    <Dynamo.Models.ConnectorModel start="929f980f-8677-4220-ba09-5e657d7ba225" start_index="0" end="a9a49e6d-b7c7-4078-a413-00a4a4e027a4" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="f4a13f5a-c4d0-4cc9-ba02-b18cf7755b51" start_index="0" end="929f980f-8677-4220-ba09-5e657d7ba225" end_index="0" portType="0" />
+  </Connectors>
+  <Notes />
+</Workspace>

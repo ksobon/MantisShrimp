@@ -1,0 +1,45 @@
+<Workspace Version="0.7.2.24887" X="101.70439040625" Y="54.819342515625" zoom="1.545620359375" Description="Queries Rhino Object for its name." Category="Archi-lab_MantisShrimp.ReadRhino" Name="Get Rhino Object Name" ID="9994c11e-4056-4c65-ae54-dd2e20ae7877">
+  <Elements>
+    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="725789b5-fe8a-478c-a099-2a0fee653f51" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
+      <Script>#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+clr.AddReference('ProtoGeometry')
+
+RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
+if RhinoCommonPath not in sys.path:
+	sys.path.Add(RhinoCommonPath)
+clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
+import Rhino as rc
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+rhObjects = IN[0]
+
+#get object names
+rhNames = []
+for i in rhObjects:
+	rhNames.append(i.Name)
+	
+#Assign your output to the OUT variable
+OUT = rhNames</Script>
+    </DSIronPythonNode.PythonNode>
+    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="a790b0b1-db5d-48d5-a645-ff651e944185" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Rhino Object(s)" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="ed698bcd-1163-4936-b86d-6a0caeb3cc4e" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Name(s)" />
+    </Dynamo.Nodes.Output>
+  </Elements>
+  <Connectors>
+    <Dynamo.Models.ConnectorModel start="725789b5-fe8a-478c-a099-2a0fee653f51" start_index="0" end="ed698bcd-1163-4936-b86d-6a0caeb3cc4e" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="a790b0b1-db5d-48d5-a645-ff651e944185" start_index="0" end="725789b5-fe8a-478c-a099-2a0fee653f51" end_index="0" portType="0" />
+  </Connectors>
+  <Notes />
+</Workspace>

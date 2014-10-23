@@ -1,0 +1,59 @@
+<Workspace Version="0.7.2.24887" X="96.0778929474939" Y="48.7771781619855" zoom="1.47618023926361" Description="Converts Rhino point object to Design Script point." Category="Archi-lab_MantisShrimp.ReadRhino" Name="RH Point to DS Point" ID="3c2e0c6a-4a85-4135-bf44-f6adc54c361d">
+  <Elements>
+    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="bc76f7f6-69cd-429a-a322-13e6e10e4a38" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
+      <Script>#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+clr.AddReference('ProtoGeometry')
+
+RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
+if RhinoCommonPath not in sys.path:
+	sys.path.Add(RhinoCommonPath)
+clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
+from Autodesk.DesignScript.Geometry import *
+import Rhino as rc
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+rhObjects = IN[0]
+
+#point/control point conversion function
+def rhPointToPoint(rhPoint):
+	rhPointX = rhPoint.Location.X
+	rhPointY = rhPoint.Location.Y
+	rhPointZ = rhPoint.Location.Z
+	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	return dsPoint
+
+#convert rhino/gh geometry to ds geometry
+dsPoints = []
+for i in rhObjects:
+	try:
+		i = i.Geometry
+	except:
+		pass
+	if i.ToString() == "Rhino.Geometry.Point":
+		dsPoints.append(rhPointToPoint(i))
+
+#Assign your output to the OUT variable
+OUT = dsPoints</Script>
+    </DSIronPythonNode.PythonNode>
+    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="f95e9c73-9736-40e6-ba45-de4d25fae224" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Rhino Object(s)" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="15acb6e9-b68c-4987-ab3f-2c269fe68571" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Point(s)" />
+    </Dynamo.Nodes.Output>
+  </Elements>
+  <Connectors>
+    <Dynamo.Models.ConnectorModel start="bc76f7f6-69cd-429a-a322-13e6e10e4a38" start_index="0" end="15acb6e9-b68c-4987-ab3f-2c269fe68571" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="f95e9c73-9736-40e6-ba45-de4d25fae224" start_index="0" end="bc76f7f6-69cd-429a-a322-13e6e10e4a38" end_index="0" portType="0" />
+  </Connectors>
+  <Notes />
+</Workspace>
