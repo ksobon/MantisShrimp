@@ -3,12 +3,16 @@
 
 import clr
 import sys
-RhinoIOPath = r'C:\Program Files\Dynamo 0.7'
-if RhinoIOPath not in sys.path:
-	sys.path.Add(RhinoIOPath)
 clr.AddReference('ProtoGeometry')
-clr.AddReferenceToFileAndPath(RhinoIOPath + r"\Rhino3dmIO.dll")
-from Autodesk.DesignScript.Geometry import *
+
+RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
+if RhinoCommonPath not in sys.path:
+	sys.path.Add(RhinoCommonPath)
+clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
 import Rhino as rc
 
 #The inputs to this node will be stored as a list in the IN variable.
