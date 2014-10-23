@@ -8,10 +8,10 @@ Mantis Shrimp is a Dynamo (Revit) and Grasshopper (Rhino) interoperability proje
 
 Couple things to check before you can get started:
 
-  1. Mantis Shrimp is written as custom Python nodes (Dynamo) so make sure that RhinoCommon.dll is the specified location. 
+  1. Mantis Shrimp is written as custom Python nodes (Dynamo) so make sure that RhinoCommon.dll is in the specified location. 
 By default that location is where you would install Rhino C:\Program Files\Rhinoceros 5 (64-bit)\System so unless you have specifically changed that location while installing Rhino, you should be good to go. 
 
-  2. Exporting from Grasshopper uses a native IronPython module called pickle or cpickle. Make sure that your IronPython is installed in the default location C:\Program Files (x86)\IronPython 2.7. Again, unless you have specifically changed that location you should be good to go. 
+  2. Exporting from Grasshopper uses a native IronPython2.7 module called pickle or cpickle. Make sure that your IronPython is installed in the default location C:\Program Files (x86)\IronPython 2.7. Again, unless you have specifically changed that location you should be good to go. 
 
   3. Add Mantis Shrimp - Export component to your Grasshopper Special Folder>User Object or simply drag and drop onto Grasshopper canvas. Instructions can be found here: Link
 
