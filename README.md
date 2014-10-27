@@ -15,8 +15,8 @@ By default that location is where you would install Rhino C:\Program Files\Rhino
 
   3. Add Mantis Shrimp - Export component to your Grasshopper Special Folder>User Object or simply drag and drop onto Grasshopper canvas. Instructions can be found here: Link
 
-  4. Add all of the Dynamo custom nodes to Dynamo's definitions folder or install them directly from Package Manager. Instructions can be found here: Link
+  4. Add all of the Dynamo custom nodes to Dynamo's definitions folder or install them directly from Package Manager. Instructions can be found here: http://archi-lab.net/?p=540
 
-  5. Read this Getting Started tutorial: Link
+  5. Read this Getting Started tutorial: http://archi-lab.net/?p=540
 
-  6. Read this Export/Import example tutorial: Link
+  6. Read this Export/Import example tutorial: http://archi-lab.net/?p=554
