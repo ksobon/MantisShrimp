@@ -20,3 +20,5 @@ By default that location is where you would install Rhino C:\Program Files\Rhino
   5. Read this Getting Started tutorial: http://archi-lab.net/?p=540
 
   6. Read this Export/Import example tutorial: http://archi-lab.net/?p=554
+
+  7. Read this Export/Import 3dm files, example tutorial: http://archi-lab.net/?p=578
