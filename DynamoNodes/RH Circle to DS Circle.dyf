@@ -1,4 +1,4 @@
-<Workspace Version="0.7.2.24887" X="0" Y="0" zoom="1" Description="Converts Rhino Circle to Design Script circle. Keep in mind that OpenNURBS has limited ability to expose Ellipse and Circle methods so not all &quot;circles&quot; will be able to pass this node." Category="Archi-lab_MantisShrimp.ReadRhino" Name="RH Circle to DS Circle" ID="353421b8-6f34-44ed-a567-32644be6a704">
+<Workspace Version="0.7.2.2921" X="0" Y="0" zoom="1" Description="Converts Rhino Circle to Design Script circle. Keep in mind that OpenNURBS has limited ability to expose Ellipse and Circle methods so not all &quot;circles&quot; will be able to pass this node." Category="Archi-lab_MantisShrimp.ReadRhino" Name="RH Circle to DS Circle" ID="b1db7bb4-44a4-4853-bf3b-dfd8a4a33f3f">
   <Elements>
     <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="6fc850f2-1755-4c74-b16d-5e36051c091a" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
       <Script>#Copyright(c) 2014, Konrad Sobon
@@ -62,7 +62,7 @@ for i in rhObjects:
 	except:
 		pass
 	if i.ToString() == "Rhino.Geometry.ArcCurve" and i.IsCircle():
-		dsCircles.append(rhArcToArc(i))
+		dsCircles.append(rhCircleToCircle(i))
 
 #Assign your output to the OUT variable
 OUT = dsCircles</Script>
