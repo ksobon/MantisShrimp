@@ -59,7 +59,7 @@ for i in rhObjects:
 	except:
 		pass
 	if i.ToString() == "Rhino.Geometry.ArcCurve" and i.IsCircle():
-		dsCircles.append(rhArcToArc(i))
+		dsCircles.append(rhCircleToCircle(i))
 
 #Assign your output to the OUT variable
 OUT = dsCircles
