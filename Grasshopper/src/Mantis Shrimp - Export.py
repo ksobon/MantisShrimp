@@ -18,6 +18,7 @@ ghenv.Component.Category = "Mantis Shrimp"
 import Rhino as rc
 import cPickle as pickle
 import os
+import Grasshopper.Kernel as gh
 
 class SerializeObjects(object):
     
@@ -48,7 +49,7 @@ class SerializeObjects(object):
                 pickle.dump(self.data, outf)
         except:
             # check input data and convert PolyCurves to NurbsCurve
-            # In some cases pickle crashes for exporting polycurves
+            # In some cases pickle crashes while exporting polycurves
             self.convertPolyCurveToCurve()
             with open(self.filePath, 'wb') as outf:
                 pickle.dump(self.data, outf)
@@ -60,5 +61,16 @@ class SerializeObjects(object):
 
 
 if _export:
-    serializer = SerializeObjects(_filePath, _geometry)
-    serializer.saveToFile()
+    try:
+        serializer = SerializeObjects(_filePath, _geometry)
+        serializer.saveToFile()
+        
+        warnType = gh.GH_RuntimeMessageLevel.Remark
+        msg = "File is exported to " + _filePath + ".\n" + \
+              "Now you can use Dynamo to import the file."
+    except Exception, e:
+        warnType = gh.GH_RuntimeMessageLevel.Warning
+        msg = "Failed to export: \n" + `e`
+    
+    ghenv.Component.AddRuntimeMessage(warnType, msg)
+        
