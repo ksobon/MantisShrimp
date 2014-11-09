@@ -234,6 +234,7 @@ def rhNurbsSurfaceToSurface(rhNurbsSurface):
 	dsNurbsSurface = NurbsSurface.ByControlPointsWeightsKnots(controlPointsArrayArray, weightsArrayArray, dsKnotsU, dsKnotsV, dsDegreeU, dsDegreeV)
 	return dsNurbsSurface
 
+#join/group curves function
 def groupCurves(Line_List): 
 	ignore_distance = 0.1 # Assume points this close or closer to each other are touching 
 	Grouped_Lines = [] 
@@ -255,45 +256,70 @@ def groupCurves(Line_List):
 		Grouped_Lines.append(Shape) 
 	return Grouped_Lines
 
-#convert rhino/gh geometry to ds geometry
-dsSurface = []
-for brep in rhObjects:
+#brep conversion function
+def rhBrepToPolySurface(brep):
 	dsSubCurves, faceIndicies, trimLoops, dsFaces, trimLoop  = [], [], [], [], []
-	trims = brep.Trims
-	for i in trims:
-		if i.Face.FaceIndex not in faceIndicies:
-			faceIndicies.append(i.Face.FaceIndex)
-		if i.TrimType == rc.Geometry.BrepTrimType.Boundary:
-			edgeIndex = i.Edge.EdgeIndex
-			edge = brep.Edges.Item[edgeIndex]
-			if edge.ObjectType.ToString() == "Curve" and edge.SpanCount > 1:
-				dsSubCurves.append(rhMultiSpanNurbsCurveToCurve(edge))
-			elif edge.ObjectType.ToString() == "Curve" and edge.SpanCount == 1:
-				if edge.IsArc():
-					arc = edge.TryGetArc()
-					dsSubCurves.append(rhArcToArc(arc[1]))
-				elif edge.IsPolyline():
-					polyline = edge.TryGetPolyline()
-					dsSubCurves.append(rhPolylineToPolyCurve(polyline[1]))
-				else:
-					dsSubCurves.append(rhSingleSpanNurbsCurveToCurve(edge.ToNurbsCurve()))
-	for index in faceIndicies:
-		dsFaces.append(rhNurbsSurfaceToSurface(brep.Faces.Item[index].ToNurbsSurface()))
+	faces = brep.Faces
+	for face in faces:
+		if face.IsSurface:
+			dsFaces.append(rhNurbsSurfaceToSurface(face.ToNurbsSurface()))
+		else:
+			trimFace = rhNurbsSurfaceToSurface(face.UnderlyingSurface().ToNurbsSurface())
+			faceLoops = face.Loops
+			for loop in faceLoops:
+				trims = loop.Trims
+				for trim in trims:
+					if trim.TrimType != rc.Geometry.BrepTrimType.Seam:
+						edgeIndex = trim.Edge.EdgeIndex
+						edge = brep.Edges.Item[edgeIndex]
+						if edge.ObjectType.ToString() == "Curve" and edge.SpanCount > 1:
+							dsSubCurves.append(rhMultiSpanNurbsCurveToCurve(edge))
+						elif edge.ObjectType.ToString() == "Curve" and edge.SpanCount == 1:
+							if edge.IsArc():
+								arc = edge.TryGetArc()
+								dsSubCurves.append(rhArcToArc(arc[1]))
+							elif edge.IsPolyline():
+								polyline = edge.TryGetPolyline()
+								dsSubCurves.append(rhPolylineToPolyCurve(polyline[1]))
+							else:
+								dsSubCurves.append(rhSingleSpanNurbsCurveToCurve(edge.ToNurbsCurve()))	
+			try:
+				curveArray = List[Curve](dsSubCurves)
+				trimLoop.append(PolyCurve.ByJoinedCurves(curveArray))
+				dsFaces.append(trimFace.TrimWithEdgeLoops(trimLoop))
+				del dsSubCurves[:]
+			except:
+				pass
+			if len(trimLoop) == 0:
+				subCurveSet = set(dsSubCurves)
+				del dsSubCurves[:]
+				groupedCurves = groupCurves(subCurveSet)
+				for i in groupedCurves:
+					curveArray = List[Curve](i)
+					if curveArray.Count > 1:
+						trimLoops.append(PolyCurve.ByJoinedCurves(curveArray))
+					else:
+						trimLoops.append(curveArray[0])
+				dsFaces.append(trimFace.TrimWithEdgeLoops(trimLoops))
+				del trimLoops[:]
+				del groupedCurves[:]
+			else:
+				del trimLoop[:]
 	try:
-		curveArray = List[Curve](dsSubCurves)
-		trimLoop.append(PolyCurve.ByJoinedCurves(curveArray))
+		dsSurface = PolySurface.ByJoinedSurfaces(dsFaces)
 	except:
 		pass
-	if len(trimLoop) != 0:
-		dsSurface.append(dsFaces[0].TrimWithEdgeLoops(trimLoop))
-		del dsSubCurves[:]
-	else:
-		subCurveSet = set(dsSubCurves)
-		groupedCurves = groupCurves(subCurveSet)
-		for i in groupedCurves:
-			curveArray = List[Curve](i)
-			trimLoops.append(PolyCurve.ByJoinedCurves(curveArray))
-		dsSurface.append(dsFaces[0].TrimWithEdgeLoops(trimLoops))
-		del dsSubCurves[:]
-		del groupedCurves[:]
-OUT = dsSurface
+	del dsFaces[:]
+	return dsSurface
+
+#convert rhino/gh geometry to ds geometry
+dsSurfaces = []
+for i in rhObjects:
+	try:
+		i = i.Geometry
+	except:
+		pass
+	if i.ToString() == "Rhino.Geometry.Brep":
+		dsSurfaces.append(rhBrepToPolySurface(i))
+
+OUT = dsSurfaces
