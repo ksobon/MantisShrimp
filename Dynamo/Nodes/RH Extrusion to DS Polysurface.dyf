@@ -1,4 +1,4 @@
-<Workspace Version="0.7.4.3090" X="132" Y="40" zoom="1" Description="This node will convert Rhino/Grasshopper extrusion to Design Script polysurface." Category="Archi-lab_MantisShrimp.ReadRhino" Name="RH Extrusion to DS Polysurface" ID="6abaf843-450d-4a24-aa33-28c34510492d">
+<Workspace Version="0.7.4.3090" X="132" Y="40" zoom="1" Description="This node will convert Rhino/Grasshopper extrusion to Design Script polysurface." Category="Archi-lab_MantisShrimp.ReadRhino" Name="RH Extrusion to DS Polysurface" ID="5167e0d9-3dde-4f2c-b0f5-e0bcfe347bc8">
   <Elements>
     <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="e5ad0e46-dd55-4e72-9b3f-3560f47baf89" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
       <Script>#Copyright(c) 2014, Konrad Sobon
