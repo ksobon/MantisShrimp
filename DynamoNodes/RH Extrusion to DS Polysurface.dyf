@@ -1,6 +1,6 @@
-<Workspace Version="0.7.4.3090" X="75.2425" Y="163.345" zoom="1.1575" Description="Converts Rhino breps to Design Script polysurfaces. " Category="Archi-lab_MantisShrimp.ReadRhino" Name="RH Brep to DS Polysurface" ID="a1cfdcc1-d453-4c50-923d-6f53aec960fa">
+<Workspace Version="0.7.4.3090" X="132" Y="40" zoom="1" Description="This node will convert Rhino/Grasshopper extrusion to Design Script polysurface." Category="Archi-lab_MantisShrimp.ReadRhino" Name="RH Extrusion to DS Polysurface" ID="6abaf843-450d-4a24-aa33-28c34510492d">
   <Elements>
-    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="4fe994f8-d685-4513-83c4-d4ba5a2f6ec8" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
+    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="e5ad0e46-dd55-4e72-9b3f-3560f47baf89" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
       <Script>#Copyright(c) 2014, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
@@ -322,21 +322,22 @@ for i in rhObjects:
 		i = i.Geometry
 	except:
 		pass
-	if i.ToString() == "Rhino.Geometry.Brep":
-		dsSurfaces.append(rhBrepToPolySurface(i))
+	if i.ToString() == "Rhino.Geometry.Extrusion":
+		brep = i.ToBrep()
+		dsSurfaces.append(rhBrepToPolySurface(brep))
 
 OUT = dsSurfaces</Script>
     </DSIronPythonNode.PythonNode>
-    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="7b28d231-3f9e-45d8-b9fd-1d587129fff0" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="c65db384-f580-490d-bb86-f306dab0cbff" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="Rhino Object(s)" />
     </Dynamo.Nodes.Symbol>
-    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="514094af-939c-4f5a-aaa2-da808ce52f41" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="14b05ded-5979-4a8c-971a-98a5cbb2d968" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="Polysurface(s)" />
     </Dynamo.Nodes.Output>
   </Elements>
   <Connectors>
-    <Dynamo.Models.ConnectorModel start="4fe994f8-d685-4513-83c4-d4ba5a2f6ec8" start_index="0" end="514094af-939c-4f5a-aaa2-da808ce52f41" end_index="0" portType="0" />
-    <Dynamo.Models.ConnectorModel start="7b28d231-3f9e-45d8-b9fd-1d587129fff0" start_index="0" end="4fe994f8-d685-4513-83c4-d4ba5a2f6ec8" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="e5ad0e46-dd55-4e72-9b3f-3560f47baf89" start_index="0" end="14b05ded-5979-4a8c-971a-98a5cbb2d968" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="c65db384-f580-490d-bb86-f306dab0cbff" start_index="0" end="e5ad0e46-dd55-4e72-9b3f-3560f47baf89" end_index="0" portType="0" />
   </Connectors>
   <Notes />
 </Workspace>
