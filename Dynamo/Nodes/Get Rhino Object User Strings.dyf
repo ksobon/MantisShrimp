@@ -1,0 +1,54 @@
+<Workspace Version="0.7.4.3090" X="131.975700161987" Y="117.542161676566" zoom="1.33823125" Description="This node will query user strings attached to geometry." Category="Archi-lab_MantisShrimp.ReadRhino" Name="Get Rhino Object User Strings" ID="1f436b9a-1ae8-457f-a6df-05f6d210c079">
+  <Elements>
+    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="9b3fc569-930f-4216-a647-2446ce791877" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
+      <Script>#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+clr.AddReference('ProtoGeometry')
+
+RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
+if RhinoCommonPath not in sys.path:
+	sys.path.Add(RhinoCommonPath)
+clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
+import Rhino as rc
+from Autodesk.DesignScript.Geometry import *
+import math
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+rhObjects = IN[0]
+
+#convert rhino/gh geometry to ds geometry
+strings = []
+for i in rhObjects:
+	try:
+		i = i.Geometry
+	except:
+		pass
+	if i.ToString() == "Rhino.Geometry.Mesh":
+		keys = i.GetUserStrings().AllKeys
+		for index in range(0, len(keys), 1):
+			strings.extend(i.GetUserStrings().GetValues(keys[index]))
+
+#Assign your output to the OUT variable
+OUT = strings</Script>
+    </DSIronPythonNode.PythonNode>
+    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="d1577358-785f-425b-a517-63105d1a6f7b" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Rhino Object(s)" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="f266a51f-f9a7-4b32-8713-799148ab3f0b" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="User Strings" />
+    </Dynamo.Nodes.Output>
+  </Elements>
+  <Connectors>
+    <Dynamo.Models.ConnectorModel start="9b3fc569-930f-4216-a647-2446ce791877" start_index="0" end="f266a51f-f9a7-4b32-8713-799148ab3f0b" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="d1577358-785f-425b-a517-63105d1a6f7b" start_index="0" end="9b3fc569-930f-4216-a647-2446ce791877" end_index="0" portType="0" />
+  </Connectors>
+  <Notes />
+</Workspace>
