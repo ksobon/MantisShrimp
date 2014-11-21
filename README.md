@@ -12,13 +12,15 @@ Couple things to check before you can get started:
 By default that location is where you would install Rhino C:\Program Files\Rhinoceros 5 (64-bit)\System so unless you have specifically changed that location while installing Rhino, you should be good to go. 
 
   2. Exporting from Grasshopper uses a native IronPython2.7 module called pickle or cpickle. Make sure that your IronPython is installed in the default location C:\Program Files (x86)\IronPython 2.7. Again, unless you have specifically changed that location you should be good to go. 
+  
+  3. Make sure that you have GhPython plug-in for Grasshopper installed. All Mantis Shrimp User Objects for Grasshopper are written in Python so you will need that plug-in for them to work. Download it at: http://www.food4rhino.com/project/ghpython?ufh 
 
-  3. Add Mantis Shrimp - Export component to your Grasshopper Special Folder>User Object or simply drag and drop onto Grasshopper canvas. Instructions can be found here: Link
+  4. Add Mantis Shrimp - Export component to your Grasshopper Special Folder>User Object or simply drag and drop onto Grasshopper canvas. Instructions can be found here: Link
 
-  4. Add all of the Dynamo custom nodes to Dynamo's definitions folder or install them directly from Package Manager. Instructions can be found here: http://archi-lab.net/?p=540
+  5. Add all of the Dynamo custom nodes to Dynamo's definitions folder or install them directly from Package Manager. Instructions can be found here: http://archi-lab.net/?p=540
 
-  5. Read this Getting Started tutorial: http://archi-lab.net/?p=540
+  6. Read this Getting Started tutorial: http://archi-lab.net/?p=540
 
-  6. Read this Export/Import example tutorial: http://archi-lab.net/?p=554
+  7. Read this Export/Import example tutorial: http://archi-lab.net/?p=554
 
-  7. Read this Export/Import 3dm files, example tutorial: http://archi-lab.net/?p=578
+  8. Read this Export/Import 3dm files, example tutorial: http://archi-lab.net/?p=578
