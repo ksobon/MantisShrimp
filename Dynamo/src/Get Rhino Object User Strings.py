@@ -20,17 +20,22 @@ import math
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
 rhObjects = IN[0]
+keys = IN[1]
 
-#convert rhino/gh geometry to ds geometry
-strings = []
-for i in rhObjects:
-	try:
-		i = i.Geometry
-	except:
-		pass
-	keys = i.GetUserStrings().AllKeys
-	for index in range(0, len(keys), 1):
-		strings.extend(i.GetUserStrings().GetValues(keys[index]))
+#extract all user strings from rhino object
+try:
+	item = item.Geometry
+except:
+	pass
+if not any(isinstance(item, list) for item in keys):
+	userStrings = []
+	for key in keys[index]:
+		userStrings[index].extend(item.GetUserStrings().GetValues(key))
+else:
+	userStrings = [[] for i in range(len(rhObjects))]
+	for index, item in enumerate(rhObjects):
+		for key in keys[index]:
+			userStrings[index].extend(item.GetUserStrings().GetValues(key))
 
 #Assign your output to the OUT variable
-OUT = strings
+OUT = userStrings
