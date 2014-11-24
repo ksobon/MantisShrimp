@@ -1,0 +1,42 @@
+<Workspace Version="0.7.4.3090" X="231.588820039635" Y="137.475725198227" zoom="1.545620359375" Description="This node converts Grasshopper UV coordinates obtained as a string to Dynamo compatible Design Script UV Coordinate." Category="Archi-lab_MantisShrimp.ReadGrasshopper" Name="GH UV String to DS UV" ID="60b75e84-0331-4e6d-84aa-7828ea272cc8">
+  <Elements>
+    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="46e3d0d7-080f-4a63-8c68-c8a6e01ce3ff" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
+      <Script>#Copyright(c) 2014, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+clr.AddReference('ProtoGeometry')
+from Autodesk.DesignScript.Geometry import *
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+
+userStrings = IN[0]
+
+if not any(isinstance(item, list) for item in userStrings):
+	UVList = []
+	for i in userStrings:
+		strList = i.split(",")	
+		UVList.append(UV.ByCoordinates(float(strList[0]), float(strList[1])))
+else:
+	UVList = [[] for i in range(len(userStrings))]
+	for index, item in enumerate(userStrings):
+		for i in item:
+			strList = i.split(",")
+			UVList[index].append(UV.ByCoordinates(float(strList[0]), float(strList[1])))
+
+#Assign your output to the OUT variable
+OUT = UVList</Script>
+    </DSIronPythonNode.PythonNode>
+    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="ce5c77c6-8eff-4616-af4a-4a009a961960" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="GH UVs" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="7b2107db-c76d-407a-ba1e-fca914a72e8b" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="DS UVs" />
+    </Dynamo.Nodes.Output>
+  </Elements>
+  <Connectors>
+    <Dynamo.Models.ConnectorModel start="46e3d0d7-080f-4a63-8c68-c8a6e01ce3ff" start_index="0" end="7b2107db-c76d-407a-ba1e-fca914a72e8b" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="ce5c77c6-8eff-4616-af4a-4a009a961960" start_index="0" end="46e3d0d7-080f-4a63-8c68-c8a6e01ce3ff" end_index="0" portType="0" />
+  </Connectors>
+  <Notes />
+</Workspace>
