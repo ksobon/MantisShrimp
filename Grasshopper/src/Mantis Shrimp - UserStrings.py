@@ -10,6 +10,8 @@ This component attaches string data to geometry via UserStrings.
         _values: a list of user defined values (will be converted to strings)
 """
 
-for i,j in zip(_keys, _values):
-    _geometry.SetUserString(str(i), str(j))
-outGeometry = _geometry
+outGeometry = []
+for index, geo in enumerate(_geometry):
+    for i, j in zip(list(_keys.Branches[index]), list(_values.Branches[index])):
+        geo.SetUserString(str(i), str(j))
+    outGeometry.append(geo)
