@@ -23,15 +23,14 @@ rhObjects = IN[0]
 keys = IN[1]
 
 #extract all user strings from rhino object
-geometry = rhObjects[0]
 try:
-	geometry = rhObjects[0].Geometry
+	item = item.Geometry
 except:
 	pass
 if not any(isinstance(item, list) for item in keys):
 	userStrings = []
-	for key in keys:
-		userStrings.extend(geometry.GetUserStrings().GetValues(key))
+	for key in keys[index]:
+		userStrings[index].extend(item.GetUserStrings().GetValues(key))
 else:
 	userStrings = [[] for i in range(len(rhObjects))]
 	for index, item in enumerate(rhObjects):
