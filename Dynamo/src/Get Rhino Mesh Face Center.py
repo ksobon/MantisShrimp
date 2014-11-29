@@ -39,7 +39,7 @@ for index, item in enumerate(rhObjects):
 	if item.ToString() == "Rhino.Geometry.Mesh":
 		faces = item.Faces
 		for i in range(0, faces.Count, 1):
-			points[index].extend(rhPoint3dToPoint(faces.GetFaceCenter(i)))
+			points[index].append(rhPoint3dToPoint(faces.GetFaceCenter(i)))
 	else:
 		message = "Please provide Mesh to extract \nFace Center points."
 
