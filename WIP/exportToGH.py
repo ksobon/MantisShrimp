@@ -100,6 +100,11 @@ def toMSObject(item):
 		msVector = MSVector(item.Normal.X, item.Normal.Y, item.Normal.Z)
 		msPlane = MSPlane(msOrigin, msVector)
 		return MSEllipse(msPlane, item.MinorAxis.Length, item.MajorAxis.Length)
+	elif type(item) == Arc:
+		msStartPt = MSPoint(item.StartPoint.X, item.StartPoint.Y, item.StartPoint.Z)
+		msEndPt = MSPoint(item.EndPoint.X, item.EndPoint.Y, item.EndPoint.Z)
+		msCenterPt = MSPoint(item.PointAtParameter(0.5).X, item.PointAtParameter(0.5).Y, item.PointAtParameter(0.5).Z)
+		return MSArc(msStartPt, msCenterPt, msEndPt)
 	else:
 		msData = MSData(item)
 		return msData
