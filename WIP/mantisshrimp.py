@@ -24,6 +24,17 @@ import Autodesk.DesignScript as ds
 import Rhino as rc
 import pickle
 
+
+#data class
+class MSData(object):
+
+        def __init__(self, _data = None):
+                self.data = _data
+
+        def addData(self, data):
+                self.data = data
+
+#geometry classes
 class MSVector(object):
 
         def __init__(self, x= None, y= None, z= None):
@@ -105,6 +116,42 @@ class MSCircle(object):
                 rhPlane = self.plane.toRHPlane()
                 rhCircle = rc.Geometry.Circle(rhPlane, self.radius)
                 return rhCircle
+
+class MSEllipse(object):
+
+        def __init__(self, plane= None, xRadius= None, yRadius= None):
+                self.plane = plane
+                self.xRadius = xRadius
+                self.yRadius = yRadius
+        def addData(self, data):
+                self.data = data
+        def toDSEllipse(self):
+                dsPlane = self.plane.toDSPlane()
+                dsEllipse = ds.Geometry.Ellipse.ByPlaneRadii(dsPlane, self.xRadius, self.yRadius)
+                return dsEllipse
+        def toRHEllipse(self):
+                rhPlane = self.plane.toRHPlane()
+                rhEllipse = ds.Geometry.Ellipse(rhPlane, self.xRadius, self.yRadius)
+                return rhEllipse
+
+class MSArc(object):
+
+        def __init__(self, startPoint= None, centerPoint= None, endPoint= None):
+                self.centerPoint = centerPoint
+                self.startPoint = startPoint
+                self.endPoint = endPoint
+        def addData(self, data):
+                self.data = data
+        def toDSArc(self):
+                dsStartPt = self.startPoint.toDSPoint()
+                dsEndPt = self.endPoint.toDSPoint()
+                dsCenterPt = self.centerPoint.toDSPoint()
+                return ds.Geometry.Arc.ByCenterPointStartPointEndPoint(dsCenterPt, dsStartPt, dsEndPt)
+        def toRHArc(self):
+                rhStartPt = self.startPoint.toRHPoint3d()
+                rhEndPt = self.endPoint.toRHPoint3d()
+                rhCenterPt = self.centerPoint.toRHPoint3d()
+                return rc.Geometry.Arc(rhStartPt, rhCenterPt, rhEndPt)
 
 class MSPolyLine(object):
 
