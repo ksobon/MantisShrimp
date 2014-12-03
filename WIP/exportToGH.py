@@ -14,7 +14,8 @@ pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
 
 ms_path = r'C:\Users\ksobon\AppData\Roaming\Dynamo\0.7\packages\Mantis Shrimp\extra'
-sys.path.append(ms_path)
+if ms_path not in sys.path:
+	sys.path.Add(ms_path)
 
 from Autodesk.DesignScript.Geometry import *
 from System import Array
