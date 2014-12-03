@@ -131,7 +131,7 @@ class MSEllipse(object):
                 return dsEllipse
         def toRHEllipse(self):
                 rhPlane = self.plane.toRHPlane()
-                rhEllipse = ds.Geometry.Ellipse(rhPlane, self.xRadius, self.yRadius)
+                rhEllipse = rc.Geometry.Ellipse(rhPlane, self.xRadius, self.yRadius)
                 return rhEllipse
 
 class MSArc(object):
