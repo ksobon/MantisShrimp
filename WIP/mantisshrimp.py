@@ -49,9 +49,9 @@ class MSVector(object):
         def toRHVector3d(self):
                 rhVector = rc.Geometry.Vector3d(self.x, self.y, self.z)
                 return rhVector
-                
+
 class MSPoint(object):
-    
+
         def __init__( self, x= None, y= None, z =None):
                 self.x = x
                 self.y = y
@@ -64,6 +64,19 @@ class MSPoint(object):
         def toRHPoint3d(self):
                 rhPoint = rc.Geometry.Point3d(self.x, self.y, self.z)
                 return rhPoint
+
+class MSPoint4d(object):
+
+        def __init__( self, x= None, y= None, z= None, weight= None):
+                self.x = x
+                self.y = y
+                self.z = z
+                self.weight = weight
+        def addData(self, data):
+                self.data = data
+        def toRHPoint4d(self):
+                rhPoint4d = rc.Geometry.Point4d(self.x, self.y, self.z, self.weight)
+                return rhPoint4d
 
 class MSPlane(object):
 
@@ -170,3 +183,46 @@ class MSPolyLine(object):
                 for line in self.segments:
                         rhPolyCurve.Append(line.toRHLineCurve())
                 return rhPolyCurve
+
+class MSKnots(object):
+
+        def __init__( self, knots= None):
+                self.knots = knots
+        def addData(self, data):
+                self.data = data
+        def toDSKnots(self):
+                dsKnots = list(self.knots)
+                dsKnots.insert(0, dsKnots[0])
+                dsKnots.insert(len(dsKnots), dsKnots[(len(dsKnots)-1)])
+                dsKnots = Array[float](dsKnots)
+                return dsKnots
+        def toRHKnots(self):
+                rhKnots = list(self.knots)
+                del rhKnots[0]
+                del rhKnots[-1]
+                return rhKnots
+
+class MSNurbsCurve(object):
+
+        def __init__( self, points= None, weights= None, knots= None, degree= None):
+                self.points = points
+                self.weights = weights
+                self.knots = knots
+                self.degree = degree
+        def addData(self, data):
+                self.data = data
+        def toDSSingleSpanNurbsCurve(self):
+                dsPtArray = Array[ds.Geometry.Point]()
+                for pt in self.points:
+                        dsPtArray.Add(pt.toDSPoint())
+                dsKnots = self.knots.toDSKnots()
+                dsNurbsCurve = ds.Geometry.NurbsCurve.ByControlPointsWeightsKnots(dsPtArray, self.weights, dsKnots, self.degree)
+                return dsNurbsCurve
+        def toRHNurbsCurve(self):
+                rhNurbsCurve = rc.Geometry.NurbsCurve(self.degree, len(self.points))
+                for index, pt in enumerate(self.points):
+                        rhNurbsCurve.Points.SetPoint(index, pt.toRHPoint4d())
+                rhKnots = self.knots.toRHKnots()
+                for index, knot in rhKnots:
+                        rhNurbsCurve.Knots[index] = knot
+                return rhNurbsCurve
