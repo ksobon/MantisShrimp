@@ -196,11 +196,6 @@ class MSKnots(object):
                 dsKnots.insert(len(dsKnots), dsKnots[(len(dsKnots)-1)])
                 dsKnots = Array[float](dsKnots)
                 return dsKnots
-        def toRHKnots(self):
-                rhKnots = list(self.knots)
-                del rhKnots[0]
-                del rhKnots[-1]
-                return rhKnots
 
 class MSNurbsCurve(object):
 
@@ -219,10 +214,14 @@ class MSNurbsCurve(object):
                 dsNurbsCurve = ds.Geometry.NurbsCurve.ByControlPointsWeightsKnots(dsPtArray, self.weights, dsKnots, self.degree)
                 return dsNurbsCurve
         def toRHNurbsCurve(self):
-                rhNurbsCurve = rc.Geometry.NurbsCurve(self.degree, len(self.points))
+                rhNurbsCurve = rc.Geometry.NurbsCurve(int(self.degree), int(len(self.points)))
                 for index, pt in enumerate(self.points):
                         rhNurbsCurve.Points.SetPoint(index, pt.toRHPoint4d())
-                rhKnots = self.knots.toRHKnots()
-                for index, knot in rhKnots:
+                rhKnots = []
+                for i in self.knots:
+                     rhKnots.append(i)
+                del rhKnots[0]
+                del rhKnots[-1]
+                for index, knot in enumerate(rhKnots):
                         rhNurbsCurve.Knots[index] = knot
                 return rhNurbsCurve
