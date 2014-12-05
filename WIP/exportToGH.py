@@ -106,6 +106,22 @@ def toMSObject(item):
 		msEndPt = MSPoint(item.EndPoint.X, item.EndPoint.Y, item.EndPoint.Z)
 		msCenterPt = MSPoint(item.PointAtParameter(0.5).X, item.PointAtParameter(0.5).Y, item.PointAtParameter(0.5).Z)
 		return MSArc(msStartPt, msCenterPt, msEndPt)
+	elif type(item) == NurbsCurve:
+		msPoints4d = []
+		for pt, w in zip(item.ControlPoints(), item.Weights()):
+			msPoints4d.append(MSPoint4d(pt.X, pt.Y, pt.Z, w))
+		return MSNurbsCurve(msPoints4d, item.Weights(), item.Knots(), item.Degree)
+	elif type(item) == Mesh:
+		msPoints = []
+		for pt in item.VertexPositions:
+			msPoints.append(MSPoint(pt.X, pt.Y, pt.Z))
+		msFaces = []
+		for i in item.FaceIndices:
+			if i.Count == 3:
+				msFaces.append(MSMeshFace(i.A, i.B, i.C))
+			else:
+				msFaces.append(MSMeshFace(i.A, i.B, i.C, i.D))
+		return MSMesh(msPoints, msFaces)
 	else:
 		msData = MSData(item)
 		return msData
