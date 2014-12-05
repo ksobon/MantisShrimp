@@ -229,9 +229,29 @@ class MSMeshFace(object):
                 self.b = b
                 self.c = c
                 self.d = d
+                if self.d == None:
+                        triangleFace = MSMeshFace(self.a, self.b, self.c)
+                        self.count = 3
+                        return triangleFace
+                else:
+                        quadFace = MSMeshFace(self.a, self.b, self.c, self.d)
+                        self.count = 4
+                        return quadFace
         def addData(self, data):
                 self.data = data
-        def 
+        def toDSMeshFace(self):
+                if self.count == 3:
+                        dsMeshFace = ds.Geometry.IndexGroup.ByIndices(self.a, self.b, self.c)
+                else:
+                        dsMeshFace = ds.Geometry.IndexGroup.ByIndices(self.a, self.b, self.c, self.d)
+                return dsMeshFace
+        def toRHMeshFace(self):
+                if self.count == 3:
+                        rhMeshFace = rc.Geometry.MeshFace(self.a, self.b, self.c)
+                else:
+                        rhMeshFace = rc.Geometry.MeshFace(self.a, self.b, self.c, self.d)
+                return rhMeshFace
+
 class MSMesh(object):
 
         def __init__( self, points= None, faces= None):
@@ -245,3 +265,4 @@ class MSMesh(object):
                 rhMesh = rc.Geometry.Mesh()
                 for pt in self.points:
                         rhMesh.Vertices.Add(pt.toRHPoint3d())
+                
