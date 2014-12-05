@@ -223,20 +223,12 @@ class MSNurbsCurve(object):
                 return rhNurbsCurve
 
 class MSMeshFace(object):
-
         def __init__(self, a= None, b= None, c= None, d= None):
                 self.a = a
                 self.b = b
                 self.c = c
                 self.d = d
-                if self.d == None:
-                        triangleFace = MSMeshFace(self.a, self.b, self.c)
-                        self.count = 3
-                        return triangleFace
-                else:
-                        quadFace = MSMeshFace(self.a, self.b, self.c, self.d)
-                        self.count = 4
-                        return quadFace
+                self.count = 3 if self.d is None else 4
         def addData(self, data):
                 self.data = data
         def toDSMeshFace(self):
@@ -260,9 +252,25 @@ class MSMesh(object):
         def addData(self, data):
                 self.data = data
         def toDSMesh(self):
-
+                dsIndexGroups = []
+                for i in self.faces:
+                        if i.count == 3:
+                                dsIndexGroups.append(ds.Geometry.IndexGroup.ByIndices(i.a, i.b, i.c))
+                        else:
+                                dsIndexGroups.append(ds.Geometry.IndexGroup.ByIndices(i.a, i.b, i.c, i.d))
+                dsVertexPositions = []
+                for i in self.points:
+                        dsVertexPositions.append(i.toDSPoint())
+                dsMesh = ds.Geometry.Mesh.ByPointsFaceIndices(dsVertexPositions, dsIndexGroups)
+                return dsMesh
         def toRHMesh(self):
                 rhMesh = rc.Geometry.Mesh()
                 for pt in self.points:
                         rhMesh.Vertices.Add(pt.toRHPoint3d())
+                rhFaces = []
+                for face in self.faces:
+                        rhFaces.append(face.toRHMeshFace())
+                rhFaceArray = Array[rc.Geometry.MeshFace](rhFaces)
+                rhMesh.Faces.AddFaces(rhFaceArray)
+                return rhMesh
                 
