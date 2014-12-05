@@ -70,4 +70,4 @@ def list_to_tree(input, none_and_holes=False, source=[0]):
 
 if _import:
     dataList = process_list(toRHObject, data)
-    outNurbsCurves = list_to_tree(dataList)
+    outNurbsCurve = list_to_tree(dataList)
