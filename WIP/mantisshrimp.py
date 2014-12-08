@@ -192,19 +192,21 @@ class MSPolyLine(object):
 
 class MSNurbsCurve(object):
 
-        def __init__( self, points= None, weights= None, knots= None, degree= None):
+        def __init__( self, points= None, weights= None, knots= None, degree= None, spanCount= None):
                 self.points = points
                 self.weights = weights
                 self.knots = knots
                 self.degree = degree
+                self.spanCount = spanCount
         def addData(self, data):
                 self.data = data
         def toDSSingleSpanNurbsCurve(self):
-                dsPtArray = Array[ds.Geometry.Point]()
-                dsWeightsArray = Array[float]()
+                dsPoints, dsWeights = [], []
                 for pt in self.points:
-                        dsPtArray.Add(pt.toDSPoint())
-                        dsWeightsArray.Add(pt.weight)
+                        dsPoints.append(pt.toDSPoint())
+                        dsWeights.append(pt.weight)
+                dsPtArray = Array[ds.Geometry.Point](dsPoints)
+                dsWeightsArray = Array[float](dsWeights)
                 dsKnots = []
                 for i in self.knots:
                         dsKnots.append(i)
