@@ -2,15 +2,15 @@
 #@arch_laboratory, http://archi-lab.net
 
 """
-This component reads Ellipses exported from Dynamo
+This component reads Circles exported from Dynamo
 
     Args:
         _filePath: path to file to read
         _import: boolean True or False that will either allow or prevent geometry \
             from being imported
 """
-ghenv.Component.Name = "Mantis Shrimp - Ellipse"
-ghenv.Component.NickName = 'DSEllipse'
+ghenv.Component.Name = "Mantis Shrimp - Circle"
+ghenv.Component.NickName = 'DSCircle'
 ghenv.Component.Category = "Mantis Shrimp"
 
 import sys
@@ -51,8 +51,8 @@ def process_list(_func, _list):
     return map( lambda x: process_list(_func, x) if type(x)==list else _func(x), _list )
 
 def toRHObject(item):
-    if type(item) == ms.MSEllipse:
-        return item.toRHEllipse()
+    if type(item) == ms.MSCircle:
+        return item.toRHCircle()
 
 """Transforms nestings of lists or tuples to a Grasshopper DataTree"""
 """Big thanks to Giulio Piacentino for this function"""
@@ -70,4 +70,4 @@ def list_to_tree(input, none_and_holes=False, source=[0]):
 
 if _import:
     dataList = process_list(toRHObject, data)
-    outEllipse = list_to_tree(dataList)
+    outCircle = list_to_tree(dataList)
