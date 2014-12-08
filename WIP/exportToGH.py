@@ -74,6 +74,9 @@ class SerializeObjects(object):
 # matching structure list
 def process_list(_func, _list):
     return map( lambda x: process_list(_func, x) if type(x)==list else _func(x), _list )
+# function to convert DS Point to MS Point
+def toMSPoint(_point):
+	return MSPoint(_point.X, _point.Y, _point.Z)
 
 # funtions to convert DS Geometry to MS Geometry
 # Points
@@ -122,6 +125,19 @@ def toMSObject(item):
 			else:
 				msFaces.append(MSMeshFace(i.A, i.B, i.C, i.D))
 		return MSMesh(msPoints, msFaces)
+	elif type(item) == NurbsSurface:
+		controlPoints = list(item.ControlPoints())
+		msControlPoints = [[] for i in range(len(controlPoints))]
+		for index, _list in enumerate(controlPoints):
+			for pt in _list:
+					msControlPoints[index].append(MSPoint(pt.X, pt.Y, pt.Z))
+		rational = item.IsRational
+		if rational:
+			weights = None
+		else:
+			weights = item.Weights()
+		return MSNurbsSurface(msControlPoints, weights, item.UKnots(), item.VKnots(), item.DegreeU, \
+			item.DegreeV, item.NumControlPointsU, item.NumControlPointsV, rational)
 	else:
 		msData = MSData(item)
 		return msData
