@@ -279,7 +279,7 @@ class MSMesh(object):
 
 class MSNurbsSurface(object):
 
-        def __init__(self, points= None, weights= None, knotsU= None, knotsV= none, degreeU= None, degreeV= None, countU= None, countV= None, rational= None):
+        def __init__(self, points= None, weights= None, knotsU= None, knotsV= None, degreeU= None, degreeV= None, countU= None, countV= None, rational= None):
                 self.points = points
                 self.weights = weights
                 self.knotsU = knotsU
