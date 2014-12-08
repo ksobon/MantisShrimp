@@ -54,10 +54,20 @@ if _import:
 			geometryOut.append(item.toDSLine())
 		elif type(item) == MSPolyLine:
 			geometryOut.append(item.toDSPolyCurve())
-		elif type(item) == MSNurbsCurve:
+		elif type(item) == MSEllipse:
+			geometryOut.append(item.toDSEllipse())
+		elif type(item) == MSCircle:
+			geometryOut.append(item.toDSCircle())
+		elif type(item) == MSArc:
+			geometryOut.append(item.toDSArc())
+		elif type(item) == MSNurbsCurve and item.spanCount == 1:
 			geometryOut.append(item.toDSSingleSpanNurbsCurve())
 		elif type(item) == MSMesh:
 			geometryOut.append(item.toDSMesh())
+		elif type(item) == MSData:
+			geometryOut.append(item.data)
+		elif type(item) == MSNurbsSurface:
+			geometryOut.append(item.toDSNurbsSurface())
 		else:
 			geometryOut.append("Geometry type not yet supported")
 
