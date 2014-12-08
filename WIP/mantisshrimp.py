@@ -24,8 +24,11 @@ import Autodesk.DesignScript as ds
 import Rhino as rc
 import pickle
 
+""" Misc Functions """
+def process_list(_func, _list):
+    return map( lambda x: process_list(_func, x) if type(x)==list else _func(x), _list )
 
-#data class
+""" Data Class """
 class MSData(object):
 
         def __init__(self, _data = None):
@@ -34,7 +37,7 @@ class MSData(object):
         def addData(self, data):
                 self.data = data
 
-#geometry classes
+""" Geometry Classes """            
 class MSVector(object):
 
         def __init__(self, x= None, y= None, z= None):
@@ -273,4 +276,47 @@ class MSMesh(object):
                 rhFaceArray = Array[rc.Geometry.MeshFace](rhFaces)
                 rhMesh.Faces.AddFaces(rhFaceArray)
                 return rhMesh
-                
+
+class MSNurbsSurface(object):
+
+        def __init__(self, points= None, weights= None, knotsU= None, knotsV= none, degreeU= None, degreeV= None, countU= None, countV= None, rational= None):
+                self.points = points
+                self.weights = weights
+                self.knotsU = knotsU
+                self.knotsV = knotsV
+                self.degreeU = degreeU
+                self.degreeV = degreeV
+                self.countU = countU
+                self.countV = countV
+                self.rational = rational
+        def addData(self, data):
+                self.data = data
+        def toRHNurbsSurface(self):
+                # in Dynamo degree is used instead of order. order = degree + 1
+                rhOrderU = self.degreeU + 1
+                rhOrderV = self.degreeV + 1
+                dim = 3
+                # creates internal uninitialized arrays for 
+                # control points and knot
+                rhNurbsSurface = rc.Geometry.NurbsSurface.Create(dim, self.rational, rhOrderU, rhOrderV, self.countU, self.countV)
+                # Dynamo uses superfluous knots so first and last need to be deleted
+                rhKnotsU, rhKnotsV = [], []
+                for i in self.knotsU:
+                     rhKnotsU.append(i)
+                del rhKnotsU[0]
+                del rhKnotsU[-1]
+                for i in self.knotsV:
+                        rhKnotsV.append(i)
+                del rhKnotsU[0]
+                del rhKnotsV[-1]
+                # add the knots
+                for i in range(0, rhNurbsSurface.KnotsU.Count):
+                        rhNurbsSurface.KnotsU[i] = rhKnotsU[i]
+                for j in range(0, rhNurbsSurface.KnotsV.Count):
+                        rhNurbsSurface.KnotsV[j] = rhKnotsV[j]
+                # add the control points
+                controlPts = process_list(toRHPoint3d())               
+                for i, _list in enumerate(controlPts):
+                        for j, _item in enumerate(_list):
+                              rhNurbsSurface.Points.SetControlPoint(i,j, rc.Geometry.ControlPoint(_item.toRHPoint3d()))
+                return rhNurbsSurface
