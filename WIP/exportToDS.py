@@ -94,6 +94,23 @@ if _export:
             for i in range(0, item.Vertices.Count, 1):
                 msPoints.append(MSPoint(item.Vertices.Item[i].X, item.Vertices.Item[i].Y, item.Vertices.Item[i].Z))
             geometryOut.append(MSMesh(msPoints, msFaces))
+        elif type(item) == rc.Geometry.Brep and item.IsSurface == True:
+            item = item.Faces[0].ToNurbsSurface()
+            msControlPoints = []
+            for pt in item.Points:
+                msControlPoints.append(MSPoint4d(pt.Location.X, pt.Location.Y, pt.Location.Z, pt.Weight))
+            # since weights in Rhino are stored in points 
+            # they will be extracted from MSPoint4d
+            weights = None
+            knotsU = []
+            for i in range(0, item.KnotsU.Count, 1):
+                knotsU.append(item.KnotsU[i])
+            knotsV = []
+            for i in range(0, item.KnotsV.Count, 1):
+                knotsV.append(item.KnotsV[i])
+            geometryOut.append(MSNurbsSurface(msControlPoints, weights, knotsU, knotsV, item.OrderU, item.OrderV, item.SpanCount(0), item.SpanCount(1), item.IsRational))
+        else:
+            geometryOut.append(MSData(item))
     try:
         serializer = SerializeObjects(filePath, geometryOut)
         serializer.saveToFile()
