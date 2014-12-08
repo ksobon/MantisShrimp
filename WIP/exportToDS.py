@@ -74,7 +74,7 @@ if _export:
             msStartPt = MSPoint(item.PointAtStart.X, item.PointAtStart.Y, item.PointAtStart.Z)
             msEndPt = MSPoint(item.PointAtEnd.X, item.PointAtEnd.Y, item.PointAtEnd.Z)
             geometryOut.append(MSLine(msStartPt, msEndPt))
-        elif type(item) == rc.Geometry.PolyCurve:
+        elif type(item) == rc.Geometry.PolyCurve and item.IsPolyline() == True:
             segments = []
             for i in range(0, item.SegmentCount,1):
                 line = item.SegmentCurve(i)
@@ -82,6 +82,39 @@ if _export:
                 msEndPt = MSPoint(line.PointAtEnd.X, line.PointAtEnd.Y, line.PointAtEnd.Z)
                 segments.append(MSLine(msStartPt, msEndPt))
             geometryOut.append(MSPolyLine(segments))
+        elif type(item) == rc.Geometry.NurbsCurve and item.IsEllipse() == True:
+            item = item.TryGetEllipse()[1]
+            msVector = MSVector(item.Plane.Normal.X,item.Plane.Normal.Y, item.Plane.Normal.Z) 
+            msOrigin = MSPoint(item.Plane.Origin.X, item.Plane.Origin.Y, item.Plane.Origin.Z)
+            msPlane = MSPlane(msOrigin, msVector)
+            geometryOut.append(MSEllipse(msPlane, item.Radius1, item.Radius2))
+        elif type(item) == rc.Geometry.ArcCurve and item.IsCircle() == True:
+            item = item.TryGetCircle()[1]
+            msVector = MSVector(item.Normal.X,item.Normal.Y, item.Normal.Z)
+            msOrigin = MSPoint(item.Center.X, item.Center.Y, item.Center.Z)
+            msPlane = MSPlane(msOrigin, msVector)
+            geometryOut.append(MSCircle(msPlane, item.Radius))
+        elif type(item) == rc.Geometry.ArcCurve and item.IsArc() == True:
+            item = item.TryGetArc()[1]
+            startPoint = MSPoint(item.StartPoint.X, item.StartPoint.Y, item.StartPoint.Z)
+            midPoint = MSPoint(item.MidPoint.X, item.MidPoint.Y, item.MidPoint.Z)
+            endPoint = MSPoint(item.EndPoint.X, item.EndPoint.Y, item.EndPoint.Z)
+            geometryOut.append(MSArc(startPoint, midPoint, endPoint))
+        elif type(item) == rc.Geometry.NurbsCurve and item.SpanCount == 1:
+            msControlPoints = []
+            for pt in item.Points:
+                msControlPoints.append(MSPoint4d(pt.Location.X, pt.Location.Y, pt.Location.Z, pt.Weight))
+            knots = []
+            for i in range(0, item.Knots.Count, 1):
+                knots.append(item.Knots[i])
+            # weights information is stored in control points
+            weights = None
+            spanCount = item.SpanCount
+            geometryOut.append(MSNurbsCurve(msControlPoints, weights, knots, item.Degree, spanCount))
+#        elif type(item) == rc.Geometry.NurbsCurve and item.SpanCount > 1:
+#            
+#        elif type(item) == rc.Geometry.PolyCurve:
+#            
         elif type(item) == rc.Geometry.Mesh:
             msFaces = []
             for i in range(0, item.Faces.Count, 1):
@@ -123,3 +156,5 @@ else:
     msg = "Export set to false."
 
 ghenv.Component.AddRuntimeMessage(warnType, msg)
+
+print(geometryOut)
