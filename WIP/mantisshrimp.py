@@ -224,7 +224,25 @@ class MSNurbsCurve(object):
                 for index, knot in enumerate(rhKnots):
                         rhNurbsCurve.Knots[index] = knot
                 return rhNurbsCurve
+""" working
+class MSPolyCurve(object):
 
+        def __init__(self, curves= None):
+                self.curves = curves
+        def addData(self, data):
+                self.data = data
+        def toDSPolyCurve(self):
+                dsPolyCurve = []
+                for crv in self.curves:
+                        if type(crv) == MSLine:
+                                dsPolyCurve.append(crv.toDSLine())
+                        elif type(crv) == MSArc:
+                                dsPolyCurve.append(crv.toDSArc())
+                        elif type(crv) == MSPolyLine:
+                                dsPolyCurve.append(crv.toDSPolyCurve())
+#                        elif type(crv) == 
+                                
+ working """
 class MSMeshFace(object):
         def __init__(self, a= None, b= None, c= None, d= None):
                 self.a = a
@@ -291,32 +309,72 @@ class MSNurbsSurface(object):
                 self.rational = rational
         def addData(self, data):
                 self.data = data
+        def toDSNurbsSurface(self):
+                # DS Requires Control Points to be in .Net typed arrays
+                # convert Rhino Control Points to ArrayArray
+                # get control points and weights 
+                dsControlPoints, dsWeights = [], []
+                for pt in self.points:
+                        dsControlPoints.append(pt.toDSPoint())
+                        dsWeights.append(pt.weight)
+                # get knotsU and knotsV
+                # convert list of knots to Array
+                dsKnotsU, dsKnotsV = [], []
+                for i in self.knotsU:
+                        dsKnotsU.append(i)
+                dsKnotsU.insert(0,dsKnotsU[0])
+                dsKnotsU.insert(len(dsKnotsU), dsKnotsU[len(dsKnotsU)-1])
+                dsKnotsU = Array[float](dsKnotsU)
+                for i in self.knotsV:
+                        dsKnotsV.append(i)
+                dsKnotsV.insert(0, dsKnotsV[0])
+                dsKnotsV.insert(len(dsKnotsV), dsKnotsV[len(dsKnotsV)-1])
+                dsKnotsV = Array[float](dsKnotsV)
+                # get degreeU and degreeV via Order - 1
+                dsDegreeU = self.degreeU - 1
+                dsDegreeV = self.degreeV - 1
+                # compute number of UV Control Points
+                uCount = self.countU + 3
+                vCount = self.countV + 3
+                #split control points into sublists of UV points
+                #convert list of lists to Array[Array[point]]
+                newControlPoints = [dsControlPoints[i:i+vCount] for i  in range(0, len(dsControlPoints), vCount)]
+                controlPointsArrayArray = Array[Array[ds.Geometry.Point]](map(tuple, newControlPoints))
+                newWeights = [dsWeights[i:i+vCount] for i  in range(0, len(dsWeights), vCount)]
+                weightsArrayArray = Array[Array[float]](map(tuple, newWeights))
+                # create DS NurbsSurface
+                dsNurbsSurface = ds.Geometry.NurbsSurface.ByControlPointsWeightsKnots(controlPointsArrayArray, weightsArrayArray, dsKnotsU, dsKnotsV, dsDegreeU, dsDegreeV)
+                return dsNurbsSurface
         def toRHNurbsSurface(self):
-                # in Dynamo degree is used instead of order. order = degree + 1
+                # Rhino uses something called Order instead of Degree. Order = Degree + 1
                 rhOrderU = self.degreeU + 1
                 rhOrderV = self.degreeV + 1
                 dim = 3
-                # creates internal uninitialized arrays for 
+                # Creates internal uninitialized arrays for 
                 # control points and knot
                 rhNurbsSurface = rc.Geometry.NurbsSurface.Create(dim, self.rational, rhOrderU, rhOrderV, self.countU, self.countV)
                 # Dynamo uses superfluous knots so first and last need to be deleted
+                # number of Knots = Degree + CountU - 1
                 rhKnotsU, rhKnotsV = [], []
-                for i in self.knotsU:
-                     rhKnotsU.append(i)
+                for i in list(self.knotsU):
+                        rhKnotsU.append(i)
                 del rhKnotsU[0]
                 del rhKnotsU[-1]
-                for i in self.knotsV:
+                for i in list(self.knotsV):
                         rhKnotsV.append(i)
-                del rhKnotsU[0]
+                del rhKnotsV[0]
                 del rhKnotsV[-1]
                 # add the knots
-                for i in range(0, rhNurbsSurface.KnotsU.Count):
+                for i in range(0, rhNurbsSurface.KnotsU.Count, 1):
                         rhNurbsSurface.KnotsU[i] = rhKnotsU[i]
-                for j in range(0, rhNurbsSurface.KnotsV.Count):
+                for j in range(0, rhNurbsSurface.KnotsV.Count, 1):
                         rhNurbsSurface.KnotsV[j] = rhKnotsV[j]
                 # add the control points
-                controlPts = process_list(toRHPoint3d())               
+                controlPts = [[] for i in range(len(list(self.points)))]
+                for index, _list in enumerate(self.points):
+                        for pt in _list:
+                                controlPts[index].append(pt.toRHPoint3d())
                 for i, _list in enumerate(controlPts):
                         for j, _item in enumerate(_list):
-                              rhNurbsSurface.Points.SetControlPoint(i,j, rc.Geometry.ControlPoint(_item.toRHPoint3d()))
+                              rhNurbsSurface.Points.SetControlPoint(i,j, rc.Geometry.ControlPoint(_item))
                 return rhNurbsSurface
