@@ -45,31 +45,43 @@ class SerializeObjects(object):
 serializer = SerializeObjects(filePath)
 serializer.readFromFile()
 
-geometryOut = []
+# recursive function to process any input list and output 
+# matching structure list
+def ProcessList(_func, _list):
+    return map( lambda x: ProcessList(_func, x) if type(x)==list else _func(x), _list )
+    
+# function to convert MS Objects to DS objects
+def toDSObject(item):
+	if type(item) == MSPoint:
+		return item.toDSPoint()
+	elif type(item) == MSLine:
+		return item.toDSLine()
+	elif type(item) == MSPolyLine:
+		return item.toDSPolyCurve()
+	elif type(item) == MSEllipse:
+		return item.toDSEllipse()
+	elif type(item) == MSCircle:
+		return item.toDSCircle()
+	elif type(item) == MSArc:
+		return item.toDSArc()
+	elif type(item) == MSNurbsCurve:
+		return item.toDSNurbsCurve()
+	elif type(item) == MSPolyCurve:
+		return item.toDSPolyCurve()
+	elif type(item) == MSMesh:
+		return item.toDSMesh()
+	elif type(item) == MSData:
+		return item.data
+	elif type(item) == MSNurbsSurface:
+		return item.toDSNurbsSurface()
+	else:
+		return "Geometry type not yet supported"
+
 if _import:
-	for item in serializer.data:
-		if type(item) == MSPoint:
-			geometryOut.append(item.toDSPoint())
-		elif type(item) == MSLine:
-			geometryOut.append(item.toDSLine())
-		elif type(item) == MSPolyLine:
-			geometryOut.append(item.toDSPolyCurve())
-		elif type(item) == MSEllipse:
-			geometryOut.append(item.toDSEllipse())
-		elif type(item) == MSCircle:
-			geometryOut.append(item.toDSCircle())
-		elif type(item) == MSArc:
-			geometryOut.append(item.toDSArc())
-		elif type(item) == MSNurbsCurve and item.spanCount == 1:
-			geometryOut.append(item.toDSSingleSpanNurbsCurve())
-		elif type(item) == MSMesh:
-			geometryOut.append(item.toDSMesh())
-		elif type(item) == MSData:
-			geometryOut.append(item.data)
-		elif type(item) == MSNurbsSurface:
-			geometryOut.append(item.toDSNurbsSurface())
-		else:
-			geometryOut.append("Geometry type not yet supported")
+	if type(serializer.data) == list:
+		geometryOut = ProcessList(toDSObject, serializer.data)
+	else:
+		geometryOut = toDSObject(serializer.data)
 
 #Assign your output to the OUT variable
 OUT = geometryOut
