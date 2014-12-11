@@ -18,7 +18,7 @@ clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
 
-from System import Array
+from System import *
 from System.Collections.Generic import *
 import Autodesk.DesignScript as ds
 import Rhino as rc
@@ -192,19 +192,19 @@ class MSPolyLine(object):
 
 class MSNurbsCurve(object):
 
-        def __init__( self, points= None, weights= None, knots= None, degree= None, spanCount= None):
+        def __init__( self, points= None, weights= None, knots= None, degree= None):
                 self.points = points
                 self.weights = weights
                 self.knots = knots
                 self.degree = degree
-                self.spanCount = spanCount
         def addData(self, data):
                 self.data = data
-        def toDSSingleSpanNurbsCurve(self):
-                dsPoints, dsWeights = [], []
-                for pt in self.points:
+        def toDSNurbsCurve(self):
+                dsPoints = []
+                dsWeights = []
+                for index, pt in enumerate(self.points):
                         dsPoints.append(pt.toDSPoint())
-                        dsWeights.append(pt.weight)
+                        dsWeights.append(float(pt.weight))
                 dsPtArray = Array[ds.Geometry.Point](dsPoints)
                 dsWeightsArray = Array[float](dsWeights)
                 dsKnots = []
@@ -212,7 +212,8 @@ class MSNurbsCurve(object):
                         dsKnots.append(i)
                 dsKnots.insert(0, dsKnots[0])
                 dsKnots.insert(len(dsKnots), dsKnots[(len(dsKnots)-1)])
-                dsNurbsCurve = ds.Geometry.NurbsCurve.ByControlPointsWeightsKnots(dsPtArray, dsWeightsArray, dsKnots, self.degree)
+                dsKnotsArray = Array[float](dsKnots)
+                dsNurbsCurve = ds.Geometry.NurbsCurve.ByControlPointsWeightsKnots(dsPtArray, dsWeightsArray, dsKnotsArray, self.degree)
                 return dsNurbsCurve
         def toRHNurbsCurve(self):
                 rhNurbsCurve = rc.Geometry.NurbsCurve(int(self.degree), int(len(self.points)))
@@ -226,7 +227,7 @@ class MSNurbsCurve(object):
                 for index, knot in enumerate(rhKnots):
                         rhNurbsCurve.Knots[index] = knot
                 return rhNurbsCurve
-""" working
+
 class MSPolyCurve(object):
 
         def __init__(self, curves= None):
@@ -234,17 +235,19 @@ class MSPolyCurve(object):
         def addData(self, data):
                 self.data = data
         def toDSPolyCurve(self):
-                dsPolyCurve = []
+                dsSubCurves = []
                 for crv in self.curves:
                         if type(crv) == MSLine:
-                                dsPolyCurve.append(crv.toDSLine())
+                                dsSubCurves.append(crv.toDSLine())
                         elif type(crv) == MSArc:
-                                dsPolyCurve.append(crv.toDSArc())
+                                dsSubCurves.append(crv.toDSArc())
                         elif type(crv) == MSPolyLine:
-                                dsPolyCurve.append(crv.toDSPolyCurve())
-#                        elif type(crv) == 
-                                
- working """
+                                dsSubCurves.append(crv.toDSPolyCurve())
+                        elif type(crv) == MSNurbsCurve:
+                                dsSubCurves.append(crv.toDSNurbsCurve())
+                dsPolyCurve = ds.Geometry.PolyCurve.ByJoinedCurves(dsSubCurves)
+                return dsPolyCurve
+
 class MSMeshFace(object):
         def __init__(self, a= None, b= None, c= None, d= None):
                 self.a = a
