@@ -136,8 +136,7 @@ def toMSObject(item):
 			weights = None
 		else:
 			weights = item.Weights()
-		return MSNurbsSurface(msControlPoints, weights, item.UKnots(), item.VKnots(), item.DegreeU, \
-			item.DegreeV, item.NumControlPointsU, item.NumControlPointsV, rational)
+		return MSNurbsSurface(msControlPoints, weights, item.UKnots(), item.VKnots(), item.DegreeU, item.DegreeV, item.NumControlPointsU, item.NumControlPointsV, rational)
 	else:
 		msData = MSData(item)
 		return msData
