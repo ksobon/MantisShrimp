@@ -109,10 +109,23 @@ if _export:
                 knots.append(item.Knots[i])
             # weights information is stored in control points
             weights = None
-            spanCount = item.SpanCount
-            geometryOut.append(MSNurbsCurve(msControlPoints, weights, knots, item.Degree, spanCount))
-#        elif type(item) == rc.Geometry.NurbsCurve and item.SpanCount > 1:
-#            
+            geometryOut.append(MSNurbsCurve(msControlPoints, weights, knots, item.Degree))
+        elif type(item) == rc.Geometry.NurbsCurve and item.SpanCount > 1:
+            rhSubCurve, msPolyCurves = [], []
+            for i in range(0, item.SpanCount, 1):
+                rhCurveSubdomain = item.SpanDomain(i)
+                rhSubCurve.append(item.ToNurbsCurve(rhCurveSubdomain))
+            for curve in rhSubCurve:
+                msControlPoints = []
+                for pt in curve.Points:
+                    msControlPoints.append(MSPoint4d(pt.Location.X, pt.Location.Y, pt.Location.Z, pt.Weight))
+                knots = []
+                for i in range(0, curve.Knots.Count, 1):
+                    knots.append(curve.Knots[i])
+                # weights information is stored in control points
+                weights = None
+                msPolyCurves.append(MSNurbsCurve(msControlPoints, weights, knots, curve.Degree))
+            geometryOut.append(MSPolyCurve(msPolyCurves))
 #        elif type(item) == rc.Geometry.PolyCurve:
 #            
         elif type(item) == rc.Geometry.Mesh:
