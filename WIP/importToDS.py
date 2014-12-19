@@ -5,17 +5,28 @@ import clr
 import sys
 clr.AddReference('ProtoGeometry')
 
-RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
-if RhinoCommonPath not in sys.path:
-	sys.path.Add(RhinoCommonPath)
-clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
-
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
 
-ms_path = r'C:\Users\ksobon\AppData\Roaming\Dynamo\0.7\packages\Mantis Shrimp\extra'
-if ms_path not in sys.path:
-	sys.path.Add(ms_path)
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+
+possibleRhPaths, message = [], None
+possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll")
+possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5.0 (64-bit)\System\RhinoCommon.dll")
+possibleRhPaths.append(r"C:\Program Files\McNeel\Rhinoceros 5.0\System\RhinoCommon.dll")
+possibleRhPaths.append(msPath)
+checkPaths = map(lambda x: os.path.exists(x), possibleRhPaths)
+for i, j in zip(possibleRhPaths, checkPaths):
+	if j and i not in sys.path:
+		sys.path.Add(i)
+		clr.AddReferenceToFileAndPath(i)
+		break
+	else:
+		message = "Please provide a valid path to RhinoCommon.dll"
 
 from Autodesk.DesignScript.Geometry import *
 from System import Array
@@ -78,10 +89,12 @@ def toDSObject(item):
 		return "Geometry type not yet supported"
 
 if _import:
-	if type(serializer.data) == list:
-		geometryOut = ProcessList(toDSObject, serializer.data)
-	else:
-		geometryOut = toDSObject(serializer.data)
+	geometryOut = process_list(toDSObject, serializer.data)
+else:
+	message = "Import set to false"
 
 #Assign your output to the OUT variable
-OUT = geometryOut
+if message != None:
+	OUT = message
+else:
+	OUT = geometryOut
