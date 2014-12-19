@@ -74,65 +74,97 @@ def process_list(_func, _list):
 def toMSPoint(_point):
 	return MSPoint(_point.X, _point.Y, _point.Z)
 
+def toMSLine(item):
+	msStartPt = MSPoint(item.StartPoint.X, item.StartPoint.Y, item.StartPoint.Z)
+	msEndPt = MSPoint(item.EndPoint.X, item.EndPoint.Y, item.EndPoint.Z)
+	return MSLine(msStartPt, msEndPt)
+
+def toMSPoint(item):
+	return MSPoint(item.X, item.Y, item.Z)
+
+def toMSArc(item):
+	msStartPt = toMSPoint(item.StartPoint)
+	msEndPt = toMSPoint(item.EndPoint)
+	msCenterPt = toMSPoint(item.PointAtParameter(0.5))
+	return MSArc(msStartPt, msCenterPt, msEndPt)
+
+def toMSNurbsCurve(item):
+	msPoints4d = []
+	for pt, w in zip(item.ControlPoints(), item.Weights()):
+		msPoints4d.append(MSPoint4d(pt.X, pt.Y, pt.Z, w))
+	return MSNurbsCurve(msPoints4d, item.Weights(), item.Knots(), item.Degree)
+
+def toMSEllipse(item):
+	msOrigin = toMSPoint(item.CenterPoint)
+	msVector = MSVector(item.Normal.X, item.Normal.Y, item.Normal.Z)
+	msPlane = MSPlane(msOrigin, msVector)
+	return MSEllipse(msPlane, item.MinorAxis.Length, item.MajorAxis.Length)
+
+def toMSCircle(item):
+	msOrigin = toMSPoint(item.CenterPoint)
+	msVector = MSVector(item.Normal.X, item.Normal.Y, item.Normal.Z)
+	msPlane = MSPlane(msOrigin, msVector)
+	return MSCircle(msPlane, item.Radius)
+
+def toMSPolyCurve(item):
+	segments = []
+	for crv in item.Curves():
+		if type(crv) == Curve:
+			segments.append(toMSNurbsCurve(crv.ToNurbsCurve()))
+	return MSPolyCurve(segments)
+
+def toMSPolyLine(item):
+	segments = []
+	for crv in item.Curves():
+		segments.append(toMSLine(crv))
+	return MSPolyLine(segments)
+
+def toMSMesh(item):
+	msPoints = []
+	for pt in item.VertexPositions:
+		msPoints.append(MSPoint(pt.X, pt.Y, pt.Z))
+	msFaces = []
+	for i in item.FaceIndices:
+		if i.Count == 3:
+			msFaces.append(MSMeshFace(i.A, i.B, i.C))
+		else:
+			msFaces.append(MSMeshFace(i.A, i.B, i.C, i.D))
+	return MSMesh(msPoints, msFaces)
+
+def toMSNurbsSurface(item):
+	controlPoints = list(item.ControlPoints())
+	msControlPoints = [[] for i in range(len(controlPoints))]
+	for index, _list in enumerate(controlPoints):
+		for pt in _list:
+			msControlPoints[index].append(MSPoint(pt.X, pt.Y, pt.Z))
+	rational = item.IsRational
+	if rational:
+		weights = None
+	else:
+		weights = item.Weights()
+	return MSNurbsSurface(msControlPoints, weights, item.UKnots(), item.VKnots(), item.DegreeU, item.DegreeV, item.NumControlPointsU, item.NumControlPointsV, rational)
+
 # funtions to convert DS Geometry to MS Geometry
 # Points
 def toMSObject(item):
 	if type(item) == Point:
 		return MSPoint(item.X, item.Y, item.Z)
 	elif type(item) == Line:
-		msStartPt = MSPoint(item.StartPoint.X, item.StartPoint.Y, item.StartPoint.Z)
-		msEndPt = MSPoint(item.EndPoint.X, item.EndPoint.Y, item.EndPoint.Z)
-		return MSLine(msStartPt, msEndPt)
+		return toMSLine(item)
 	elif type(item) == PolyCurve:
-		segments = []
-		for line in item.Curves():
-			msStartPt = MSPoint(line.StartPoint.X, line.StartPoint.Y, line.StartPoint.Z)
-			msEndPt = MSPoint(line.EndPoint.X, line.EndPoint.Y, line.EndPoint.Z)
-			segments.append(MSLine(msStartPt, msEndPt))
-		return MSPolyLine(segments)
+		return toMSPolyCurve(item)
 	elif type(item) == Circle:
-		msOrigin = MSPoint(item.CenterPoint.X, item.CenterPoint.Y, item.CenterPoint.Z)
-		msVector = MSVector(item.Normal.X, item.Normal.Y, item.Normal.Z)
-		msPlane = MSPlane(msOrigin, msVector)
-		return MSCircle(msPlane, item.Radius)
+		return toMSCircle(item)
 	elif type(item) == Ellipse:
-		msOrigin = MSPoint(item.CenterPoint.X, item.CenterPoint.Y, item.CenterPoint.Z)
-		msVector = MSVector(item.Normal.X, item.Normal.Y, item.Normal.Z)
-		msPlane = MSPlane(msOrigin, msVector)
-		return MSEllipse(msPlane, item.MinorAxis.Length, item.MajorAxis.Length)
+		return toMSEllipse(item)
 	elif type(item) == Arc:
-		msStartPt = MSPoint(item.StartPoint.X, item.StartPoint.Y, item.StartPoint.Z)
-		msEndPt = MSPoint(item.EndPoint.X, item.EndPoint.Y, item.EndPoint.Z)
-		msCenterPt = MSPoint(item.PointAtParameter(0.5).X, item.PointAtParameter(0.5).Y, item.PointAtParameter(0.5).Z)
-		return MSArc(msStartPt, msCenterPt, msEndPt)
+		return toMSArc(item)
 	elif type(item) == NurbsCurve:
-		msPoints4d = []
-		for pt, w in zip(item.ControlPoints(), item.Weights()):
-			msPoints4d.append(MSPoint4d(pt.X, pt.Y, pt.Z, w))
-		return MSNurbsCurve(msPoints4d, item.Weights(), item.Knots(), item.Degree)
+		return toMSNurbsCurve(item)
 	elif type(item) == Mesh:
-		msPoints = []
-		for pt in item.VertexPositions:
-			msPoints.append(MSPoint(pt.X, pt.Y, pt.Z))
-		msFaces = []
-		for i in item.FaceIndices:
-			if i.Count == 3:
-				msFaces.append(MSMeshFace(i.A, i.B, i.C))
-			else:
-				msFaces.append(MSMeshFace(i.A, i.B, i.C, i.D))
-		return MSMesh(msPoints, msFaces)
+		return toMSMesh(item)
 	elif type(item) == NurbsSurface:
-		controlPoints = list(item.ControlPoints())
-		msControlPoints = [[] for i in range(len(controlPoints))]
-		for index, _list in enumerate(controlPoints):
-			for pt in _list:
-					msControlPoints[index].append(MSPoint(pt.X, pt.Y, pt.Z))
-		rational = item.IsRational
-		if rational:
-			weights = None
-		else:
-			weights = item.Weights()
-		return MSNurbsSurface(msControlPoints, weights, item.UKnots(), item.VKnots(), item.DegreeU, item.DegreeV, item.NumControlPointsU, item.NumControlPointsV, rational)
+		return toMSNurbsSurface(item)
 	else:
 		msData = MSData(item)
 		return msData
