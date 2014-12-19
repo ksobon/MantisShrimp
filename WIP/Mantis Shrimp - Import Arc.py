@@ -14,14 +14,15 @@ ghenv.Component.NickName = 'DSArc'
 ghenv.Component.Category = "Mantis Shrimp"
 
 import sys
-ms_path = r'C:\Users\ksobon\AppData\Roaming\Dynamo\0.7\packages\Mantis Shrimp\extra'
-if ms_path not in sys.path:
-    sys.path.append(ms_path)
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+if msPath not in sys.path:
+    sys.path.append(msPath)
 import mantisshrimp as ms
 mantis = ms
 reload(mantis)
 
-import os
 from System import Array
 from System.Collections.Generic import *
 import cPickle as pickle
