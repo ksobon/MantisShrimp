@@ -247,6 +247,21 @@ class MSPolyCurve(object):
                                 dsSubCurves.append(crv.toDSNurbsCurve())
                 dsPolyCurve = ds.Geometry.PolyCurve.ByJoinedCurves(dsSubCurves)
                 return dsPolyCurve
+        def toRHPolyCurve(self):
+                rhSubCurves = []
+                for crv in self.curves:
+                        if type(crv) == MSLine:
+                                rhSubCurves.append(crv.toRHLineCurve())
+                        elif type(crv) == MSArc:
+                                rhSubCurves.append(crv.toRHArc())
+                        elif type(crv) == MSPolyLine:
+                                rhSubCurves.append(crv.toRHPolyCurve())
+                        elif type(crv) == MSNurbsCurve:
+                                rhSubCurves.append(crv.toRHNurbsCurve())
+                rhPolyCurve = rc.Geometry.PolyCurve()
+                for curve in rhSubCurves:
+                        rhPolyCurve.Append(curve)
+                return rhPolyCurve
 
 class MSMeshFace(object):
         def __init__(self, a= None, b= None, c= None, d= None):
