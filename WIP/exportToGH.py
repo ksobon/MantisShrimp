@@ -5,17 +5,28 @@ import clr
 import sys
 clr.AddReference('ProtoGeometry')
 
-RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
-if RhinoCommonPath not in sys.path:
-	sys.path.Add(RhinoCommonPath)
-clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
-
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
 
-ms_path = r'C:\Users\ksobon\AppData\Roaming\Dynamo\0.7\packages\Mantis Shrimp\extra'
-if ms_path not in sys.path:
-	sys.path.Add(ms_path)
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+
+possibleRhPaths, message = [], None
+possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll")
+possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5.0 (64-bit)\System\RhinoCommon.dll")
+possibleRhPaths.append(r"C:\Program Files\McNeel\Rhinoceros 5.0\System\RhinoCommon.dll")
+possibleRhPaths.append(msPath)
+checkPaths = map(lambda x: os.path.exists(x), possibleRhPaths)
+for i, j in zip(possibleRhPaths, checkPaths):
+	if j and i not in sys.path:
+		sys.path.Add(i)
+		clr.AddReferenceToFileAndPath(i)
+		break
+	else:
+		message = "Please provide a valid path to RhinoCommon.dll"
 
 from Autodesk.DesignScript.Geometry import *
 from System import Array
@@ -23,7 +34,6 @@ from System.Collections.Generic import *
 import Rhino as rc
 import pickle
 from mantisshrimp import *
-import os
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
@@ -43,26 +53,12 @@ class SerializeObjects(object):
         
         self.filePath = filePath
         self.data = data
-   
-    def convertPolyCurveToCurve(self):
-        placeHolder = range(len(self.data))
-        
-        for geoCount, geo in enumerate(self.data):
-            if type(geo) == rc.Geometry.PolyCurve:
-                placeHolder[geoCount] = geo.ToNurbsCurve()
-            else:
-                placeHolder[geoCount] = geo
-        
-        self.data = placeHolder
         
     def saveToFile(self):
         try:
             with open(self.filePath, 'wb') as outf:
                 pickle.dump(self.data, outf)
         except:
-            # check input data and convert PolyCurves to NurbsCurve
-            # In some cases pickle crashes while exporting polycurves
-            self.convertPolyCurveToCurve()
             with open(self.filePath, 'wb') as outf:
                 pickle.dump(self.data, outf)
             
