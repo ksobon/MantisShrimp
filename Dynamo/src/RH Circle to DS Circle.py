@@ -19,20 +19,37 @@ import Rhino as rc
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
 rhObjects = IN[0]
+_units = IN[1]
+
+def toDSUnits(_units):
+	if _units == rc.UnitSystem.Millimeters:
+		return 0.001
+	elif _units == rc.UnitSystem.Centimeters:
+		return 0.01
+	elif _units == rc.UnitSystem.Decimeters:
+		return 0.1
+	elif _units == rc.UnitSystem.Meters:
+		return 1
+	elif _units == rc.UnitSystem.Inches:
+		return 0.0254
+	elif _units == rc.UnitSystem.Feet:
+		return 0.3048
+	elif _units == rc.UnitSystem.Yards:
+		return 0.9144
 
 #Vector3d conversion function
 def rhVector3dToVector(rhVector):
-	VectorX = rhVector.X 
-	VectorY = rhVector.Y
-	VectorZ = rhVector.Z
+	VectorX = rhVector.X * toDSUnits(_units)
+	VectorY = rhVector.Y * toDSUnits(_units)
+	VectorZ = rhVector.Z * toDSUnits(_units)
 	dsVector = Vector.ByCoordinates(VectorX, VectorY, VectorZ)
 	return dsVector
 
 #3dPoint Conversion
 def rhPoint3dToPoint(rhPoint):
-	rhPointX = rhPoint.X
-	rhPointY = rhPoint.Y
-	rhPointZ = rhPoint.Z
+	rhPointX = rhPoint.X * toDSUnits(_units)
+	rhPointY = rhPoint.Y * toDSUnits(_units)
+	rhPointZ = rhPoint.Z * toDSUnits(_units)
 	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 	return dsPoint
 	
@@ -46,7 +63,7 @@ def rhPlaneToPlane(rhPlane):
 #circle conversion function
 def rhCircleToCircle(rhCurve):
 	rhCircle = rhCurve.TryGetCircle()[1]
-	radius = rhCircle.Radius
+	radius = rhCircle.Radius * toDSUnits(_units)
 	plane = rhPlaneToPlane(rhCircle.Plane)
 	dsCircle = Circle.ByPlaneRadius(plane, radius)
 	return dsCircle
@@ -58,7 +75,7 @@ for i in rhObjects:
 		i = i.Geometry
 	except:
 		pass
-	if i.ToString() == "Rhino.Geometry.ArcCurve" and i.IsCircle():
+	if i.ToString() == "Rhino.Geometry.Ellipse" and i.IsEllipse():
 		dsCircles.append(rhCircleToCircle(i))
 
 #Assign your output to the OUT variable
