@@ -29,9 +29,11 @@ dataEnteringNode = IN
 rhModel = IN[0]
 rhLayer = IN[1]
 
+objects = rhModel.Objects.FindByLayer(rhLayer)
+units = rhModel.Settings.ModelUnitSystem
 #get objects by layer
 #Assign your output to the OUT variable
 if message != None:
 	OUT = '\n'.join('{:^35}'.format(s) for s in message.split('\n'))
 else:
-	OUT = rhModel.Objects.FindByLayer(rhLayer)
+	OUT = objects, units
