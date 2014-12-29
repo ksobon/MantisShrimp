@@ -58,16 +58,14 @@ def rhVector3dToVector(rhVector):
 	VectorX = rhVector.X * toDSUnits(_units)
 	VectorY = rhVector.Y * toDSUnits(_units)
 	VectorZ = rhVector.Z * toDSUnits(_units)
-	dsVector = Vector.ByCoordinates(VectorX, VectorY, VectorZ)
-	return dsVector
+	return Vector.ByCoordinates(VectorX, VectorY, VectorZ)
 
 #3dPoint Conversion function
 def rhPoint3dToPoint(rhPoint):
 	rhPointX = rhPoint.X * toDSUnits(_units)
 	rhPointY = rhPoint.Y * toDSUnits(_units)
 	rhPointZ = rhPoint.Z * toDSUnits(_units)
-	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
-	return dsPoint
+	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 	
 #Plane conversion function
 def rhPlaneToPlane(rhPlane):
