@@ -5,13 +5,28 @@ import clr
 import sys
 clr.AddReference('ProtoGeometry')
 
-RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
-if RhinoCommonPath not in sys.path:
-	sys.path.Add(RhinoCommonPath)
-clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
-
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
+
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+
+possibleRhPaths, message = [], None
+possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll")
+possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5.0 (64-bit)\System\RhinoCommon.dll")
+possibleRhPaths.append(r"C:\Program Files\McNeel\Rhinoceros 5.0\System\RhinoCommon.dll")
+possibleRhPaths.append(msPath)
+checkPaths = map(lambda x: os.path.exists(x), possibleRhPaths)
+for i, j in zip(possibleRhPaths, checkPaths):
+	if j and i not in sys.path:
+		sys.path.Add(i)
+		clr.AddReferenceToFileAndPath(i)
+		break
+	else:
+		message = "Please provide a valid path to RhinoCommon.dll"
 
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
@@ -19,14 +34,31 @@ import Rhino as rc
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
 rhObjects = IN[0]
+_units = IN[1]
 
-#3dPoint Conversion
+#unit conversion function from Rhino to DS
+def toDSUnits(_units):
+	if _units == rc.UnitSystem.Millimeters:
+		return 0.001
+	elif _units == rc.UnitSystem.Centimeters:
+		return 0.01
+	elif _units == rc.UnitSystem.Decimeters:
+		return 0.1
+	elif _units == rc.UnitSystem.Meters:
+		return 1
+	elif _units == rc.UnitSystem.Inches:
+		return 0.0254
+	elif _units == rc.UnitSystem.Feet:
+		return 0.3048
+	elif _units == rc.UnitSystem.Yards:
+		return 0.9144
+
+#3dPoint Conversion function
 def rhPoint3dToPoint(rhPoint):
-	rhPointX = rhPoint.X
-	rhPointY = rhPoint.Y
-	rhPointZ = rhPoint.Z
-	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
-	return dsPoint
+	rhPointX = rhPoint.X * toDSUnits(_units)
+	rhPointY = rhPoint.Y * toDSUnits(_units)
+	rhPointZ = rhPoint.Z * toDSUnits(_units)
+	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 
 #poly curve conversion function
 def rhCurveToPolyCurve(rhCurve):
