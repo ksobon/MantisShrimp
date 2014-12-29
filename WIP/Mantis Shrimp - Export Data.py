@@ -73,7 +73,7 @@ if _export:
         serializer = SerializeObjects(_filePath, dataOut)
         serializer.saveToFile()
         warnType = gh.GH_RuntimeMessageLevel.Remark
-        msg = "File is exported to " + filePath + "Now you can use Dynamo to import the file."
+        msg = "File is exported to " + _filePath + "Now you can use Dynamo to import the file."
     except Exception, e:
         warnType = gh.GH_RuntimeMessageLevel.Warning
         msg = "Failed to export: \n" + `e`
