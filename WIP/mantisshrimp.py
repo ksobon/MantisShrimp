@@ -10,13 +10,28 @@ import sys
 sys.path.append(r"C:\Program Files\Dynamo 0.7")
 clr.AddReference('ProtoGeometry')
 
-RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
-if RhinoCommonPath not in sys.path:
-	sys.path.Add(RhinoCommonPath)
-clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
-
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
+
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+
+possibleRhPaths, message = [], None
+possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll")
+possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5.0 (64-bit)\System\RhinoCommon.dll")
+possibleRhPaths.append(r"C:\Program Files\McNeel\Rhinoceros 5.0\System\RhinoCommon.dll")
+possibleRhPaths.append(msPath)
+checkPaths = map(lambda x: os.path.exists(x), possibleRhPaths)
+for i, j in zip(possibleRhPaths, checkPaths):
+	if j and i not in sys.path:
+		sys.path.Add(i)
+		clr.AddReferenceToFileAndPath(i)
+		break
+	else:
+		message = "Please provide a valid path to RhinoCommon.dll"
 
 from System import *
 from System.Collections.Generic import *
@@ -169,8 +184,8 @@ class MSArc(object):
         def toRHArc(self):
                 rhStartPt = self.startPoint.toRHPoint3d()
                 rhEndPt = self.endPoint.toRHPoint3d()
-                rhCenterPt = self.centerPoint.toRHPoint3d()
-                return rc.Geometry.Arc(rhStartPt, rhCenterPt, rhEndPt)
+                rhMidPt = self.centerPoint.toRHPoint3d()
+                return rc.Geometry.Arc(rhStartPt, rhMidPt, rhEndPt)
 
 class MSPolyLine(object):
 
@@ -244,7 +259,7 @@ class MSPolyCurve(object):
                         elif type(crv) == MSPolyLine:
                                 dsSubCurves.append(crv.toDSPolyCurve())
                         elif type(crv) == MSNurbsCurve:
-                                dsSubCurves.append(crv.toDSNurbsCurve())
+                                dsSubCurves.append(crv.toDSNurbsCurve().ToNurbsCurve())
                 dsPolyCurve = ds.Geometry.PolyCurve.ByJoinedCurves(dsSubCurves)
                 return dsPolyCurve
         def toRHPolyCurve(self):
@@ -253,15 +268,10 @@ class MSPolyCurve(object):
                         if type(crv) == MSLine:
                                 rhSubCurves.append(crv.toRHLineCurve())
                         elif type(crv) == MSArc:
-                                rhSubCurves.append(crv.toRHArc())
-                        elif type(crv) == MSPolyLine:
-                                rhSubCurves.append(crv.toRHPolyCurve())
+                                rhSubCurves.append(rc.Geometry.ArcCurve(crv.toRHArc()))
                         elif type(crv) == MSNurbsCurve:
                                 rhSubCurves.append(crv.toRHNurbsCurve())
-                rhPolyCurve = rc.Geometry.PolyCurve()
-                for curve in rhSubCurves:
-                        rhPolyCurve.Append(curve)
-                return rhPolyCurve
+                return rc.Geometry.Curve.JoinCurves(rhSubCurves)
 
 class MSMeshFace(object):
         def __init__(self, a= None, b= None, c= None, d= None):
