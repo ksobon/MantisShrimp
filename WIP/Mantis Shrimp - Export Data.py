@@ -17,13 +17,15 @@ ghenv.Component.NickName = 'exportData'
 ghenv.Component.Category = "Mantis Shrimp"
 
 import sys
-# change this to where you library is
-sys.path.append(r"C:\Users\ksobon\AppData\Roaming\Dynamo\0.7\packages\Mantis Shrimp\extra")
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+if msPath not in sys.path:
+    sys.path.append(msPath)
 from mantisshrimp import *
 
 import Rhino as rc
 import cPickle as pickle
-import os
 import Grasshopper.Kernel as gh
 
 class SerializeObjects(object):
@@ -37,28 +39,10 @@ class SerializeObjects(object):
         
         self.filePath = filePath
         self.data = data
-   
-    def convertPolyCurveToCurve(self):
-        placeHolder = range(len(self.data))
-        
-        for geoCount, geo in enumerate(self.data):
-            if type(geo) == rc.Geometry.PolyCurve:
-                placeHolder[geoCount] = geo.ToNurbsCurve()
-            else:
-                placeHolder[geoCount] = geo
-        
-        self.data = placeHolder
         
     def saveToFile(self):
-        try:
-            with open(self.filePath, 'wb') as outf:
-                pickle.dump(self.data, outf)
-        except:
-            # check input data and convert PolyCurves to NurbsCurve
-            # In some cases pickle crashes while exporting polycurves
-            self.convertPolyCurveToCurve()
-            with open(self.filePath, 'wb') as outf:
-                pickle.dump(self.data, outf)
+        with open(self.filePath, 'wb') as outf:
+            pickle.dump(self.data, outf)
             
     def readFromFile(self):
         with open(self.filePath, 'rb') as inf:
@@ -86,7 +70,7 @@ dataOut = MSData(TreeToList(_data))
 
 if _export:
     try:
-        serializer = SerializeObjects(filePath, dataOut)
+        serializer = SerializeObjects(_filePath, dataOut)
         serializer.saveToFile()
         warnType = gh.GH_RuntimeMessageLevel.Remark
         msg = "File is exported to " + filePath + "Now you can use Dynamo to import the file."
