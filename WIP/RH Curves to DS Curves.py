@@ -71,8 +71,7 @@ def rhPoint3dToPoint(rhPoint):
 	rhPointX = rhPoint.X * toDSUnits(_units)
 	rhPointY = rhPoint.Y * toDSUnits(_units)
 	rhPointZ = rhPoint.Z * toDSUnits(_units)
-	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
-	return dsPoint
+	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 
 #point/control point conversion function
 def rhPointToPoint(rhPoint):
@@ -91,12 +90,9 @@ def rhPlaneToPlane(rhPlane):
 
 #LineCurve conversion function
 def rhLineToLine(rhCurve):
-	rhStartPoint = rhCurve.PointAtStart
-	dsStartPoint = rhPoint3dToPoint(rhStartPoint)
-	rhEndPoint = rhCurve.PointAtEnd
-	dsEndPoint = rhPoint3dToPoint(rhEndPoint)
-	dsLine = Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
-	return dsLine
+	dsStartPoint = rhPoint3dToPoint(rhCurve.PointAtStart)
+	dsEndPoint = rhPoint3dToPoint(rhCurve.PointAtEnd)
+	return Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
 
 #arc conversion function
 def rhArcToArc(rhArc):
