@@ -5,22 +5,38 @@ import clr
 import sys
 clr.AddReference('ProtoGeometry')
 
-RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
-if RhinoCommonPath not in sys.path:
-	sys.path.Add(RhinoCommonPath)
-clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
-
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
 
-import Rhino as rc
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+
+possibleRhPaths, message = [], None
+possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll")
+possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5.0 (64-bit)\System\RhinoCommon.dll")
+possibleRhPaths.append(r"C:\Program Files\McNeel\Rhinoceros 5.0\System\RhinoCommon.dll")
+possibleRhPaths.append(msPath)
+checkPaths = map(lambda x: os.path.exists(x), possibleRhPaths)
+for i, j in zip(possibleRhPaths, checkPaths):
+	if j and i not in sys.path:
+		sys.path.Add(i)
+		clr.AddReferenceToFileAndPath(i)
+		break
+	else:
+		message = "Please provide a valid path to RhinoCommon.dll"
+
 from Autodesk.DesignScript.Geometry import *
+import Rhino as rc
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
 rhObjects = IN[0]
 _units = IN[1]
 
+#unit conversion function from Rhino to DS
 def toDSUnits(_units):
 	if _units == rc.UnitSystem.Millimeters:
 		return 0.001
@@ -42,17 +58,13 @@ def rhPoint3dToPoint(rhPoint):
 	rhPointX = rhPoint.X * toDSUnits(_units)
 	rhPointY = rhPoint.Y * toDSUnits(_units)
 	rhPointZ = rhPoint.Z * toDSUnits(_units)
-	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
-	return dsPoint
+	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 
 #LineCurve conversion function
 def rhLineToLine(rhCurve):
-	rhStartPoint = rhCurve.PointAtStart
-	dsStartPoint = rhPoint3dToPoint(rhStartPoint)
-	rhEndPoint = rhCurve.PointAtEnd
-	dsEndPoint = rhPoint3dToPoint(rhEndPoint)
-	dsLine = Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
-	return dsLine
+	dsStartPoint = rhPoint3dToPoint(rhCurve.PointAtStart)
+	dsEndPoint = rhPoint3dToPoint(rhCurve.PointAtEnd)
+	return Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
 
 #convert rhino/gh geometry to ds geometry
 dsLines = []
