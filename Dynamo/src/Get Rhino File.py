@@ -7,23 +7,28 @@ clr.AddReference('ProtoGeometry')
 
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
-import pickle
+
 import os
-rhCommonFile = r'C:\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll'
-if os.path.exists(rhCommonFile):
-	RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
-	if RhinoCommonPath not in sys.path:
-		sys.path.Add(RhinoCommonPath)
-	clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
-	import Rhino as rc
-	message = None
-else:
-	message = "RhinoCommon.dll not located in \nC:\Program Files\Rhinoceros 5 \n(64-bit)\System. Please change \nRhinoCommonPath variable."
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+
+possibleRhPaths, message = [], None
+possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll")
+possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5.0 (64-bit)\System\RhinoCommon.dll")
+possibleRhPaths.append(r"C:\Program Files\McNeel\Rhinoceros 5.0\System\RhinoCommon.dll")
+possibleRhPaths.append(msPath)
+checkPaths = map(lambda x: os.path.exists(x), possibleRhPaths)
+for i, j in zip(possibleRhPaths, checkPaths):
+	if j and i not in sys.path:
+		sys.path.Add(i)
+		clr.AddReferenceToFileAndPath(i)
+		break
+	else:
+		message = "Please provide a valid path to RhinoCommon.dll"
 
 from Autodesk.DesignScript.Geometry import *
-from System import Array
-from System.Collections.Generic import *
-
 import Rhino as rc
 
 #The inputs to this node will be stored as a list in the IN variable.
