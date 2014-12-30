@@ -102,14 +102,7 @@ def toMSNurbsCurve(item):
 # use these two functions to convert generic Curve
 # to Line or Arc since PolyCurve.Curves() method
 # returns only generic curves
-def tryGetLine(item):
-	startPoint = item.StartPoint
-	endPoint = item.EndPoint
-	distance = startPoint.DistanceTo(endPoint)
-	if round(item.Length, 4) == round(distance, 4):
-		return Line.ByStartPointEndPoint(startPoint, endPoint)
-	else:
-		return None
+
 def tryGetArc(item):
 	startPoint = item.StartPoint
 	endPoint = item.EndPoint
@@ -119,7 +112,16 @@ def tryGetArc(item):
 		return dsArc
 	else:
 		return None
-"""
+
+def tryGetLine(item):
+	startPoint = item.StartPoint
+	endPoint = item.EndPoint
+	distance = startPoint.DistanceTo(endPoint)
+	if round(item.Length, 4) == round(distance, 4):
+		return Line.ByStartPointEndPoint(startPoint, endPoint)
+	else:
+		return None
+
 # this is still work in progress
 def toMSPolyLine(item):
 	segments, msSegments = [], []
@@ -131,7 +133,7 @@ def toMSPolyLine(item):
 		return MSPolyLine(msSegments)
 	else:
 		return None
-
+"""
 def toMSPolyCurve(item):
 	segments = []
 	for crv in item.Curves():
@@ -175,8 +177,11 @@ def toMSObject(item):
 		return MSPoint(item.X, item.Y, item.Z)
 	elif type(item) == Line:
 		return toMSLine(item)
-#	elif type(item) == PolyCurve:
-#		return toMSPolyCurve(item)
+	elif type(item) == PolyCurve:
+		if toMSPolyLine(item) == None:
+			print("None")
+		else:
+			return toMSPolyLine(item)
 	elif type(item) == Circle:
 		return toMSCircle(item)
 	elif type(item) == Ellipse:
