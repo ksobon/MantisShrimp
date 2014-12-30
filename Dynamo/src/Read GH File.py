@@ -14,19 +14,17 @@ msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
 if msPath not in sys.path:
 	sys.path.Add(msPath)
 
-possibleRhPaths, message = [], None
+
+possibleRhPaths = []
 possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll")
 possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5.0 (64-bit)\System\RhinoCommon.dll")
 possibleRhPaths.append(r"C:\Program Files\McNeel\Rhinoceros 5.0\System\RhinoCommon.dll")
 possibleRhPaths.append(msPath)
 checkPaths = map(lambda x: os.path.exists(x), possibleRhPaths)
 for i, j in zip(possibleRhPaths, checkPaths):
-	if j and i not in sys.path:
+	if i not in sys.path and j == True:
 		sys.path.Add(i)
 		clr.AddReferenceToFileAndPath(i)
-		break
-	else:
-		message = "Please provide a valid path to RhinoCommon.dll"
 
 from Autodesk.DesignScript.Geometry import *
 from System import Array
@@ -81,20 +79,18 @@ def toDSObject(item):
 		return item.toDSPolyCurve()
 	elif type(item) == MSMesh:
 		return item.toDSMesh()
-	elif type(item) == MSData:
-		return item.data
 	elif type(item) == MSNurbsSurface:
 		return item.toDSNurbsSurface()
 	else:
 		return "Geometry type not yet supported"
 
 if _import:
-	geometryOut = process_list(toDSObject, serializer.data)
+	if type(serializer.data) == MSData:
+		geometryOut = serializer.data.data
+	else:
+		geometryOut = process_list(toDSObject, serializer.data)
 else:
 	message = "Import set to false"
 
 #Assign your output to the OUT variable
-if message != None:
-	OUT = message
-else:
-	OUT = geometryOut
+OUT = geometryOut
