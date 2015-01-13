@@ -56,39 +56,41 @@ serializer.readFromFile()
 
 # recursive function to process any input list and output 
 # matching structure list
-def ProcessList(_func, _list):
-    return map( lambda x: ProcessList(_func, x) if type(x)==list else _func(x), _list )
+def ProcessList(_func, _list, _units):
+    return map( lambda x: ProcessList(_func, x, _units) if type(x)==list else _func(x, _units), _list )
     
 # function to convert MS Objects to DS objects
-def toDSObject(item):
+def toDSObject(item, units):
 	if type(item) == MSPoint:
-		return item.toDSPoint()
+		return item.toDSPoint(units)
 	elif type(item) == MSLine:
-		return item.toDSLine()
+		return item.toDSLine(units)
 	elif type(item) == MSPolyLine:
-		return item.toDSPolyCurve()
+		return item.toDSPolyCurve(units)
 	elif type(item) == MSEllipse:
-		return item.toDSEllipse()
+		return item.toDSEllipse(units)
 	elif type(item) == MSCircle:
-		return item.toDSCircle()
+		return item.toDSCircle(units)
 	elif type(item) == MSArc:
-		return item.toDSArc()
+		return item.toDSArc(units)
 	elif type(item) == MSNurbsCurve:
-		return item.toDSNurbsCurve()
+		return item.toDSNurbsCurve(units)
 	elif type(item) == MSPolyCurve:
-		return item.toDSPolyCurve()
+		return item.toDSPolyCurve(units)
 	elif type(item) == MSMesh:
-		return item.toDSMesh()
+		return item.toDSMesh(units)
 	elif type(item) == MSNurbsSurface:
-		return item.toDSNurbsSurface()
+		return item.toDSNurbsSurface(units)
 	else:
 		return "Geometry type not yet supported"
 
 if _import:
-	if type(serializer.data) == MSData:
-		geometryOut = serializer.data.data
+	serializedData = serializer.data
+	rhUnits = serializedData.pop(0).data
+	if type(serializedData) == MSData:
+		geometryOut = serializedData.data
 	else:
-		geometryOut = process_list(toDSObject, serializer.data)
+		geometryOut = ProcessList(toDSObject, serializedData, rhUnits)
 else:
 	message = "Import set to false"
 
