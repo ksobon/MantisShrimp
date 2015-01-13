@@ -30,6 +30,7 @@ import Rhino as rc
 import Grasshopper.Kernel as gh
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
+import scriptcontext as sc
 
 class SerializeObjects(object):
 	def __init__(self, filePath, data = None):
@@ -53,7 +54,7 @@ def process_list(_func, _list):
 
 def toRHObject(item):
     if type(item) == ms.MSCircle:
-        return item.toRHCircle()
+        return item.toRHCircle(sc.doc.ModelUnitSystem.ToString())
 
 """Transforms nestings of lists or tuples to a Grasshopper DataTree"""
 """Big thanks to Giulio Piacentino for this function"""
