@@ -26,6 +26,7 @@ from mantisshrimp import *
 import Rhino as rc
 import cPickle as pickle
 import Grasshopper.Kernel as gh
+import scriptcontext as sc
 
 class SerializeObjects(object):
     
@@ -200,6 +201,7 @@ def toMSObject(item):
 geometryList = TreeToList(_geometry)
 if _export:
     geometryOut = process_list(toMSObject, geometryList)
+    geometryOut.insert(0, MSData(sc.doc.ModelUnitSystem.ToString()))
     try:
         serializer = SerializeObjects(_filePath, geometryOut)
         serializer.saveToFile()
