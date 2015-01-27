@@ -86,10 +86,10 @@ def toDSObject(item, units):
 
 if _import:
 	serializedData = serializer.data
-	rhUnits = serializedData.pop(0).data
 	if type(serializedData) == MSData:
 		geometryOut = serializedData.data
 	else:
+		rhUnits = serializedData.pop(0).data
 		geometryOut = ProcessList(toDSObject, serializedData, rhUnits)
 else:
 	message = "Import set to false"
