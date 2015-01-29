@@ -11,8 +11,11 @@ sys.path.append(pyt_path)
 import os
 appDataPath = os.getenv('APPDATA')
 msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
 if msPath not in sys.path:
 	sys.path.Add(msPath)
+if rhPath not in sys.path:
+	sys.path.Add(rhPath)
 
 
 possibleRhPaths = []
