@@ -180,8 +180,12 @@ def rhPolyCurveToPolyCurve(rhCurve):
 			dsSubCurves.append(rhCurveToPolyCurve(curve))
 		elif curve.ToString() == "Rhino.Geometry.ArcCurve":
 			dsSubCurves.append(rhArcToArc(curve))
-		elif curve.ToString() == "Rhino.Geometry.NurbsCurve":
+		elif curve.ToString() == "Rhino.Geometry.NurbsCurve" and curve.SpanCount==1:
 			dsSubCurves.append(rhSingleSpanNurbsCurveToCurve(curve))
+		elif curve.ToString() == "Rhino.Geometry.NurbsCurve" and curve.SpanCount > 1:
+			subPolyCurves = rhMultiSpanNurbsCurveToCurve(curve)
+			for curve in subPolyCurves:
+				dsSubCurves.append(curve)
 		elif curve.ToString() == "Rhino.Geometry.PolyCurve":
 			subPolyCurves = rhMultiSpanNurbsCurveToCurve(curve.ToNurbsCurve())
 			for curve in subPolyCurves:
