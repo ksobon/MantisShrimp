@@ -440,3 +440,50 @@ class MSNurbsSurface(object):
                         for j, _item in enumerate(_list):
                               rhNurbsSurface.Points.SetControlPoint(i,j, rc.Geometry.ControlPoint(_item))
                 return rhNurbsSurface
+
+class MSMultiSpanNurbsCurve(object):
+
+        def __init__(self, curves = None):
+                self.curves = curves
+        def addData(self, data):
+                self.data = data
+
+class MSBrep(object):
+
+        def __init__(self, faces = None, trims = None):
+                self.faces = faces
+                self.trims = trims
+        def addData(self, data):
+                self.data = data
+        def toDSPolySurface(self, units):
+                dsFaces = []
+                for face, loop in zip(self.faces, self.trims):
+                        dsFace = face.toDSNurbsSurface(units)
+                        if len(loop) != 0:
+                                trimLoops = []
+                                for trim in loop:
+                                        dsTrims = []
+                                        for curve in trim:
+                                                if type(curve) == MSNurbsCurve:
+                                                        dsTrims.append(curve.toDSNurbsCurve(units))
+                                                elif type(curve) == MSMultiSpanNurbsCurve:
+                                                        for i in curve.curves:
+                                                                dsTrims.append(i.toDSNurbsCurve(units))
+                                                elif type(curve) == MSLine:
+                                                        dsTrims.append(curve.toDSLine(units))
+                                                elif type(curve) == MSCircle:
+                                                        dsTrims.append(curve.toDSCircle(units))
+                                                elif type(curve) == MSArc:
+                                                        dsTrims.append(curve.toDSArc(units))
+                                                elif type(curve) == MSEllipse:
+                                                        dsTrims.append(curve.toDSEllipse(units))
+                                                elif type(curve) == MSPolyCurve:
+                                                        dsTrims.append(curve.toDSPolyCurve(units))
+                                                elif type(curve) == MSPolyLine:
+                                                        dsTrims.append(curve.toDSPolyCurve(units))
+                                        curveArray = List[ds.Geometry.Curve](dsTrims)
+                                        trimLoops.append(ds.Geometry.PolyCurve.ByJoinedCurves(curveArray))
+                                dsFaces.append(dsFace.TrimWithEdgeLoops(trimLoops))
+                        else:
+                                dsFaces.append(dsFace)
+                return ds.Geometry.PolySurface.ByJoinedSurfaces(dsFaces)
