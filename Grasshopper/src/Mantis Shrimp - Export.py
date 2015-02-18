@@ -27,6 +27,8 @@ import Rhino as rc
 import cPickle as pickle
 import Grasshopper.Kernel as gh
 import scriptcontext as sc
+from Grasshopper import DataTree
+from Grasshopper.Kernel.Data import GH_Path
 
 class SerializeObjects(object):
     
@@ -100,9 +102,18 @@ def rhNurbsCurveToMSNurbsCurve(item):
     knots = []
     for i in range(0, item.Knots.Count, 1):
         knots.append(item.Knots[i])
-    # weights information is stored in control points
     weights = None
     return MSNurbsCurve(msControlPoints, weights, knots, item.Degree)
+
+def rhMultiSpanNurbsCurveToMSNurbsCurve(item):
+    rhSubCurve = []
+    msCurves = []
+    for i in range(0, item.SpanCount, 1):
+        rhCurveSubdomain = item.SpanDomain(i)
+        rhSubCurve.append(item.ToNurbsCurve(rhCurveSubdomain))
+    for curve in rhSubCurve:
+        msCurves.append(rhNurbsCurveToMSNurbsCurve(curve))
+    return MSMultiSpanNurbsCurve(msCurves)
 
 def rhPointToMSPoint(item):
     if type(item) == rc.Geometry.Point:
@@ -157,8 +168,6 @@ def rhNurbsSurfaceToMSNurbsSurface(item):
     msControlPoints = []
     for pt in item.Points:
         msControlPoints.append(MSPoint4d(pt.Location.X, pt.Location.Y, pt.Location.Z, pt.Weight))
-        # since weights in Rhino are stored in points 
-        # they will be extracted from MSPoint4d
     weights = None
     knotsU = []
     for i in range(0, item.KnotsU.Count, 1):
@@ -168,35 +177,76 @@ def rhNurbsSurfaceToMSNurbsSurface(item):
         knotsV.append(item.KnotsV[i])
     return MSNurbsSurface(msControlPoints, weights, knotsU, knotsV, item.OrderU, item.OrderV, item.SpanCount(0), item.SpanCount(1), item.IsRational)
 
+def tryExplode(item):
+    try:
+        return list(item.Explode())
+    except:
+        return [item]
+
+def rhBrepToMsBrep(item):
+    msFaces = []
+    faces = item.Faces
+    joinedCurves = [[] for i in range(faces.Count)]
+    for index, face in enumerate(faces):
+        if face.IsSurface:
+            msFaces.append(rhNurbsSurfaceToMSNurbsSurface(face.ToNurbsSurface()))
+        else:
+            msFaces.append(rhNurbsSurfaceToMSNurbsSurface(face.UnderlyingSurface().ToNurbsSurface()))
+            faceLoops = face.Loops
+            for loop in faceLoops:
+                trims = loop.Trims
+                trimLoop = []
+                for trim in trims:
+                    if trim.TrimType != rc.Geometry.BrepTrimType.Seam:
+                        edgeIndex = trim.Edge.EdgeIndex
+                        edge = item.Edges.Item[edgeIndex]
+                        trimLoop.append(edge.DuplicateCurve())
+                joinedCurves[index].extend(rc.Geometry.Curve.JoinCurves(trimLoop))
+    explodedCrvs = process_list(tryExplode, joinedCurves)
+    msTrimCurves = process_list(toMSObject, explodedCrvs)
+    msBrep = MSBrep(msFaces,msTrimCurves)
+    print(msFaces)
+    return msBrep
+
 def toMSObject(item):
     if type(item) == rc.Geometry.Point3d or type(item) == rc.Geometry.Point:
         return rhPointToMSPoint(item)
-    elif type(item) == rc.Geometry.LineCurve:
+    elif type(item) == rc.Geometry.LineCurve or type(item) == rc.Geometry.Line:
         return rhLineCurveToMSLine(item)
     elif type(item) == rc.Geometry.PolyCurve and item.IsPolyline() == True:
         return rhPolyLineToMSPolyLine(item)
-    elif type(item) == rc.Geometry.Polyline:
+    elif type(item) == rc.Geometry.Polyline or type(item) == rc.Geometry.Polyline:
         return rhPolyLineToMSPolyLine(item)
-    elif type(item) == rc.Geometry.NurbsCurve and item.IsEllipse() == True:
-        item = item.TryGetEllipse()[1]
-        return rhEllipseToMSEllipse(item)
-    elif type(item) == rc.Geometry.ArcCurve and item.IsCircle() == True:
+    elif type(item) == rc.Geometry.NurbsCurve and item.IsClosed == True:
+        if item.IsEllipse() == True:
+            item = item.TryGetEllipse()[1]
+            return rhEllipseToMSEllipse(item)
+        elif item.IsCircle() == True:
+            item = item.TryGetCircle()[1]
+            return rhCircleToMSCircle(item)
+        else:
+            pass
+    if type(item) == rc.Geometry.ArcCurve and item.IsCircle() == True:
         item = item.TryGetCircle()[1]
         return rhCircleToMSCircle(item)
     elif type(item) == rc.Geometry.ArcCurve and item.IsArc() == True:
         item = item.TryGetArc()[1]
         return rhArcCurveToMSArc(item)
-    elif type(item) == rc.Geometry.NurbsCurve:
+    elif type(item) == rc.Geometry.NurbsCurve and item.SpanCount == 1:
         return rhNurbsCurveToMSNurbsCurve(item)
+    elif type(item) == rc.Geometry.NurbsCurve and item.SpanCount > 1:
+        return rhMultiSpanNurbsCurveToMSNurbsCurve(item)
     elif type(item) == rc.Geometry.PolyCurve:
         return rhPolyCurveToMSPolyCurve(item)
     elif type(item) == rc.Geometry.Mesh:
         return rhMeshToMSMesh(item)
+    if type(item) == rc.Geometry.Brep:
+        return rhBrepToMsBrep(item)
     elif type(item) == rc.Geometry.Brep and item.IsSurface == True:
         item = item.Faces[0].ToNurbsSurface()
         return rhNurbsSurfaceToMSNurbsSurface(item)
     else:
-        geometryOut.append(MSData(item))
+        return MSData(item)
 
 geometryList = TreeToList(_geometry)
 if _export:
@@ -212,5 +262,4 @@ if _export:
         msg = "Failed to export: \n" + `e`
 else:
     msg = "Export set to false."
-
 ghenv.Component.AddRuntimeMessage(warnType, msg)
