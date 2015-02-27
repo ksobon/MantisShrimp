@@ -1,4 +1,4 @@
-#Copyright(c) 2014, Konrad Sobon
+#Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
@@ -12,22 +12,12 @@ import os
 appDataPath = os.getenv('APPDATA')
 msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
 rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\RhinoCommon.dll"
 if msPath not in sys.path:
 	sys.path.Add(msPath)
 if rhPath not in sys.path:
 	sys.path.Add(rhPath)
-
-
-possibleRhPaths = []
-possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll")
-possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5.0 (64-bit)\System\RhinoCommon.dll")
-possibleRhPaths.append(r"C:\Program Files\McNeel\Rhinoceros 5.0\System\RhinoCommon.dll")
-possibleRhPaths.append(msPath)
-checkPaths = map(lambda x: os.path.exists(x), possibleRhPaths)
-for i, j in zip(possibleRhPaths, checkPaths):
-	if i not in sys.path and j == True:
-		sys.path.Add(i)
-		clr.AddReferenceToFileAndPath(i)
+	clr.AddReferenceToFileAndPath(rhDllPath)
 
 from Autodesk.DesignScript.Geometry import *
 from System import Array
@@ -78,6 +68,8 @@ def toDSObject(item, units):
 		return item.toDSArc(units)
 	elif type(item) == MSNurbsCurve:
 		return item.toDSNurbsCurve(units)
+	elif type(item) == MSMultiSpanNurbsCurve:
+		return item.toDSPolyCurve(units)
 	elif type(item) == MSPolyCurve:
 		return item.toDSPolyCurve(units)
 	elif type(item) == MSMesh:
@@ -85,8 +77,10 @@ def toDSObject(item, units):
 	elif type(item) == MSNurbsSurface:
 		return item.toDSNurbsSurface(units)
 	else:
-		return "Geometry type not yet supported"
+		message = "Geometry type not yet supported"
+		return message
 
+message = None
 if _import:
 	serializedData = serializer.data
 	if type(serializedData) == MSData:
@@ -98,4 +92,7 @@ else:
 	message = "Import set to false"
 
 #Assign your output to the OUT variable
-OUT = geometryOut
+if message == None:
+	OUT = geometryOut
+else:
+	OUT = '\n'.join('{:^35}'.format(s) for s in message.split('\n'))
