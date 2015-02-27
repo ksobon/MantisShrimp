@@ -1,4 +1,4 @@
-#Copyright(c) 2014, Konrad K Sobon
+#Copyright(c) 2015, Konrad K Sobon
 #@arch_laboratory, http://archi-lab.net
 
 """
@@ -65,10 +65,10 @@ def TreeToList(input, RetrieveBase = lambda x: x[0]):
         extend_at(path, 0, input.Branch(path), all)
     return RetrieveBase(all)
 
-# convert incoming DataTree to Python List object
-dataOut = MSData(TreeToList(_data))
 
 if _export:
+    # convert incoming DataTree to Python List object
+    dataOut = MSData(TreeToList(_data))
     try:
         serializer = SerializeObjects(_filePath, dataOut)
         serializer.saveToFile()
@@ -77,7 +77,6 @@ if _export:
     except Exception, e:
         warnType = gh.GH_RuntimeMessageLevel.Warning
         msg = "Failed to export: \n" + `e`
+        ghenv.Component.AddRuntimeMessage(warnType, msg)
 else:
     msg = "Export set to false."
-
-ghenv.Component.AddRuntimeMessage(warnType, msg)
