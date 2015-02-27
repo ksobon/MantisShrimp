@@ -1,4 +1,4 @@
-#Copyright(c) 2014, Konrad K Sobon
+#Copyright(c) 2015, Konrad K Sobon
 #@arch_laboratory, http://archi-lab.net
 
 """
@@ -152,17 +152,14 @@ def rhPolyCurveToMSPolyCurve(item):
     return msPolyCurve
 
 def rhMeshToMSMesh(item):
-    msFaces = []
-    for i in range(0, item.Faces.Count):
-        face = item.Faces.Item[i]
-        if face.IsQuad:
-            msFaces.append(MSMeshFace(face.A, face.B, face.C, face.D))
-        else:
-            msFaces.append(MSMeshFace(face.A, face.B, face.C))
-        msPoints = []
-        for i in range(0, item.Vertices.Count, 1):
-            msPoints.append(MSPoint(item.Vertices.Item[i].X, item.Vertices.Item[i].Y, item.Vertices.Item[i].Z))
-    return MSMesh(msPoints, msFaces)
+    faceTopology = []
+    msPoints = []
+    for i in range(0, item.Faces.Count, 1):
+        faceIndicies = item.TopologyVertices.IndicesFromFace(i)
+        faceTopology.append(list(faceIndicies))
+    for i in range(0, item.Vertices.Count, 1):
+        msPoints.append(MSPoint(item.Vertices.Item[i].X, item.Vertices.Item[i].Y, item.Vertices.Item[i].Z))
+    return MSMesh(msPoints, faceTopology)
 
 def rhNurbsSurfaceToMSNurbsSurface(item):
     msControlPoints = []
@@ -205,7 +202,6 @@ def rhBrepToMsBrep(item):
     explodedCrvs = process_list(tryExplode, joinedCurves)
     msTrimCurves = process_list(toMSObject, explodedCrvs)
     msBrep = MSBrep(msFaces,msTrimCurves)
-    print(msFaces)
     return msBrep
 
 def toMSObject(item):
@@ -248,8 +244,8 @@ def toMSObject(item):
     else:
         return MSData(item)
 
-geometryList = TreeToList(_geometry)
 if _export:
+    geometryList = TreeToList(_geometry)
     geometryOut = process_list(toMSObject, geometryList)
     geometryOut.insert(0, MSData(sc.doc.ModelUnitSystem.ToString()))
     try:
@@ -260,6 +256,6 @@ if _export:
     except Exception, e:
         warnType = gh.GH_RuntimeMessageLevel.Warning
         msg = "Failed to export: \n" + `e`
+        ghenv.Component.AddRuntimeMessage(warnType, msg)
 else:
     msg = "Export set to false."
-ghenv.Component.AddRuntimeMessage(warnType, msg)
