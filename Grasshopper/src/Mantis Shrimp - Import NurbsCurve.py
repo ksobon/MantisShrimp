@@ -1,4 +1,4 @@
-#Copyright(c) 2014, Konrad K Sobon
+#Copyright(c) 2015, Konrad K Sobon
 #@arch_laboratory, http://archi-lab.net
 
 """
@@ -45,10 +45,6 @@ class SerializeObjects(object):
 		with open(self.filePath, 'rb') as inf:
 			self.data = pickle.load(inf)
 
-serializer = SerializeObjects(_filePath)
-serializer.readFromFile()
-data = serializer.data
-
 def process_list(_func, _list):
     return map( lambda x: process_list(_func, x) if type(x)==list else _func(x), _list )
 
@@ -71,5 +67,8 @@ def list_to_tree(input, none_and_holes=False, source=[0]):
     if input is not None: t=DataTree[object]();proc(input,t,source[:]);return t
 
 if _import:
+    serializer = SerializeObjects(_filePath)
+    serializer.readFromFile()
+    data = serializer.data
     dataList = process_list(toRHObject, data)
     outNurbsCurve = list_to_tree(dataList)
