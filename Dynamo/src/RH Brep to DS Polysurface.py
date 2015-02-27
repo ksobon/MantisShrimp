@@ -1,4 +1,4 @@
-#Copyright(c) 2014, Konrad Sobon
+#Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
@@ -11,19 +11,13 @@ sys.path.append(pyt_path)
 import os
 appDataPath = os.getenv('APPDATA')
 msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\RhinoCommon.dll"
 if msPath not in sys.path:
 	sys.path.Add(msPath)
-
-possibleRhPaths = []
-possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll")
-possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5.0 (64-bit)\System\RhinoCommon.dll")
-possibleRhPaths.append(r"C:\Program Files\McNeel\Rhinoceros 5.0\System\RhinoCommon.dll")
-possibleRhPaths.append(msPath)
-checkPaths = map(lambda x: os.path.exists(x), possibleRhPaths)
-for i, j in zip(possibleRhPaths, checkPaths):
-	if j and i not in sys.path:
-		sys.path.Add(i)
-		clr.AddReferenceToFileAndPath(i)
+if rhPath not in sys.path:
+	sys.path.Add(rhPath)
+	clr.AddReferenceToFileAndPath(rhDllPath)
 
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
@@ -172,7 +166,10 @@ def rhPolylineToPolyCurve(rhCurve):
 	segments = rhCurve.GetSegments()
 	lineArray = List[Curve]()
 	for i in segments:
-		lineArray.Add(rhLineToLine(i))
+		if i.ToString() == "Rhino.Geometry.LineCurve":
+			lineArray.Add(rhLineCurveToLine(i))
+		else:
+			lineArray.Add(rhLineToLine(i))
 	dsPolyline = PolyCurve.ByJoinedCurves(lineArray)
 	lineArray.Clear()
 	return dsPolyline
@@ -274,7 +271,7 @@ def groupCurves(Line_List):
 						distance = P1.DistanceTo(P2) 
 						if distance <= ignore_distance: 
 							Queue.add(Potential_Match) 
-			Line_List -= Queue 
+			Line_List = [item for item in Line_List if item not in Queue]
 		Grouped_Lines.append(Shape) 
 	return Grouped_Lines
 
