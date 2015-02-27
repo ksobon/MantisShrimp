@@ -1,4 +1,4 @@
-#Copyright(c) 2014, Konrad Sobon
+#Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
@@ -11,19 +11,13 @@ sys.path.append(pyt_path)
 import os
 appDataPath = os.getenv('APPDATA')
 msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\RhinoCommon.dll"
 if msPath not in sys.path:
 	sys.path.Add(msPath)
-
-possibleRhPaths = []
-possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll")
-possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5.0 (64-bit)\System\RhinoCommon.dll")
-possibleRhPaths.append(r"C:\Program Files\McNeel\Rhinoceros 5.0\System\RhinoCommon.dll")
-possibleRhPaths.append(msPath)
-checkPaths = map(lambda x: os.path.exists(x), possibleRhPaths)
-for i, j in zip(possibleRhPaths, checkPaths):
-	if j and i not in sys.path:
-		sys.path.Add(i)
-		clr.AddReferenceToFileAndPath(i)
+if rhPath not in sys.path:
+	sys.path.Add(rhPath)
+	clr.AddReferenceToFileAndPath(rhDllPath)
 
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
@@ -55,14 +49,16 @@ def rhVector3dToVector(rhVector):
 	VectorX = rhVector.X * toDSUnits(_units)
 	VectorY = rhVector.Y * toDSUnits(_units)
 	VectorZ = rhVector.Z * toDSUnits(_units)
-	return Vector.ByCoordinates(VectorX, VectorY, VectorZ)
+	dsVector = Vector.ByCoordinates(VectorX, VectorY, VectorZ)
+	return dsVector
 
 #3dPoint Conversion function
 def rhPoint3dToPoint(rhPoint):
 	rhPointX = rhPoint.X * toDSUnits(_units)
 	rhPointY = rhPoint.Y * toDSUnits(_units)
 	rhPointZ = rhPoint.Z * toDSUnits(_units)
-	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+	return dsPoint
 	
 #Plane conversion function
 def rhPlaneToPlane(rhPlane):
