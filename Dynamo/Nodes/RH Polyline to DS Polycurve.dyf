@@ -1,20 +1,27 @@
-<Workspace Version="0.7.2.24887" X="85.1325000000001" Y="69.1475" zoom="1.1575" Description="Converts Rhino polyline curve to Design Script polycurve." Category="Archi-lab_MantisShrimp.ReadRhino" Name="RH Polyline to DS Polycurve" ID="79ae25b5-e561-4470-a006-e9d33b10100a">
+<Workspace Version="0.7.6.4145" X="85.1325000000001" Y="69.1475" zoom="1" Name="RH Polyline to DS Polycurve" ID="72ad8c00-a0ef-4a3b-bf2f-1470f2e51e11" Description="Converts Rhino polyline curve to Design Script polycurve." Category="Archi-lab_MantisShrimp.Rhinoceros.Geometry">
+  <NamespaceResolutionMap />
   <Elements>
-    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="f6b60a1b-b4aa-4c9a-ba93-00f88f00a99c" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
-      <Script>#Copyright(c) 2014, Konrad Sobon
+    <DSIronPythonNode.PythonNode guid="f6b60a1b-b4aa-4c9a-ba93-00f88f00a99c" type="DSIronPythonNode.PythonNode" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="2">
+      <Script>#Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
 import sys
 clr.AddReference('ProtoGeometry')
 
-RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
-if RhinoCommonPath not in sys.path:
-	sys.path.Add(RhinoCommonPath)
-clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
-
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
+
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\RhinoCommon.dll"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+if rhPath not in sys.path:
+	sys.path.Add(rhPath)
+	clr.AddReferenceToFileAndPath(rhDllPath)
 
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
@@ -22,14 +29,31 @@ import Rhino as rc
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
 rhObjects = IN[0]
+_units = IN[1]
 
-#3dPoint Conversion
+#unit conversion function from Rhino to DS
+def toDSUnits(_units):
+	if _units == rc.UnitSystem.Millimeters:
+		return 0.001
+	elif _units == rc.UnitSystem.Centimeters:
+		return 0.01
+	elif _units == rc.UnitSystem.Decimeters:
+		return 0.1
+	elif _units == rc.UnitSystem.Meters:
+		return 1
+	elif _units == rc.UnitSystem.Inches:
+		return 0.0254
+	elif _units == rc.UnitSystem.Feet:
+		return 0.3048
+	elif _units == rc.UnitSystem.Yards:
+		return 0.9144
+
+#3dPoint Conversion function
 def rhPoint3dToPoint(rhPoint):
-	rhPointX = rhPoint.X
-	rhPointY = rhPoint.Y
-	rhPointZ = rhPoint.Z
-	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
-	return dsPoint
+	rhPointX = rhPoint.X * toDSUnits(_units)
+	rhPointY = rhPoint.Y * toDSUnits(_units)
+	rhPointZ = rhPoint.Z * toDSUnits(_units)
+	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 
 #poly curve conversion function
 def rhCurveToPolyCurve(rhCurve):
@@ -55,16 +79,20 @@ for i in rhObjects:
 #Assign your output to the OUT variable
 OUT = dsPolyCurves</Script>
     </DSIronPythonNode.PythonNode>
-    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="063ac0ab-b8eb-4fca-a7eb-47a05a88a0e9" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Symbol guid="063ac0ab-b8eb-4fca-a7eb-47a05a88a0e9" type="Dynamo.Nodes.Symbol" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="Rhino Object(s)" />
     </Dynamo.Nodes.Symbol>
-    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="22f31156-7707-4896-a772-6f390ecad75d" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Output guid="22f31156-7707-4896-a772-6f390ecad75d" type="Dynamo.Nodes.Output" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="PolyCurve(s)" />
     </Dynamo.Nodes.Output>
+    <Dynamo.Nodes.Symbol guid="36b17b33-4d72-41a1-8453-32beafb7f95e" type="Dynamo.Nodes.Symbol" nickname="Input" x="0.215982721382261" y="63.0669546436285" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Units" />
+    </Dynamo.Nodes.Symbol>
   </Elements>
   <Connectors>
     <Dynamo.Models.ConnectorModel start="f6b60a1b-b4aa-4c9a-ba93-00f88f00a99c" start_index="0" end="22f31156-7707-4896-a772-6f390ecad75d" end_index="0" portType="0" />
     <Dynamo.Models.ConnectorModel start="063ac0ab-b8eb-4fca-a7eb-47a05a88a0e9" start_index="0" end="f6b60a1b-b4aa-4c9a-ba93-00f88f00a99c" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="36b17b33-4d72-41a1-8453-32beafb7f95e" start_index="0" end="f6b60a1b-b4aa-4c9a-ba93-00f88f00a99c" end_index="1" portType="0" />
   </Connectors>
   <Notes />
 </Workspace>

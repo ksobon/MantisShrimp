@@ -1,44 +1,65 @@
-<Workspace Version="0.7.2.24887" X="193" Y="116" zoom="1" Description="Converts Rhino Lines to Design Script Lines" Category="Archi-lab_MantisShrimp.ReadRhino" Name="RH Line to DS Line" ID="329b8139-5e6c-4cdd-8744-2ec8160aa02b">
+<Workspace Version="0.7.6.4145" X="166.54" Y="92.375" zoom="1" Name="RH Line to DS Line" ID="a01e452d-2b4d-4f99-942f-019138e41f87" Description="Converts Rhino Lines to Design Script Lines" Category="Archi-lab_MantisShrimp.Rhinoceros.Geometry">
+  <NamespaceResolutionMap />
   <Elements>
-    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="2821fa45-094d-4364-b580-d819da23e6e9" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
-      <Script>#Copyright(c) 2014, Konrad Sobon
+    <DSIronPythonNode.PythonNode guid="2821fa45-094d-4364-b580-d819da23e6e9" type="DSIronPythonNode.PythonNode" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="2">
+      <Script>#Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
 import sys
 clr.AddReference('ProtoGeometry')
 
-RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
-if RhinoCommonPath not in sys.path:
-	sys.path.Add(RhinoCommonPath)
-clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
-
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
 
-import Rhino as rc
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\RhinoCommon.dll"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+if rhPath not in sys.path:
+	sys.path.Add(rhPath)
+	clr.AddReferenceToFileAndPath(rhDllPath)
+
 from Autodesk.DesignScript.Geometry import *
+import Rhino as rc
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
 rhObjects = IN[0]
+_units = IN[1]
+
+#unit conversion function from Rhino to DS
+def toDSUnits(_units):
+	if _units == rc.UnitSystem.Millimeters:
+		return 0.001
+	elif _units == rc.UnitSystem.Centimeters:
+		return 0.01
+	elif _units == rc.UnitSystem.Decimeters:
+		return 0.1
+	elif _units == rc.UnitSystem.Meters:
+		return 1
+	elif _units == rc.UnitSystem.Inches:
+		return 0.0254
+	elif _units == rc.UnitSystem.Feet:
+		return 0.3048
+	elif _units == rc.UnitSystem.Yards:
+		return 0.9144
 
 #3dPoint Conversion function
 def rhPoint3dToPoint(rhPoint):
-	rhPointX = rhPoint.X
-	rhPointY = rhPoint.Y
-	rhPointZ = rhPoint.Z
-	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
-	return dsPoint
+	rhPointX = rhPoint.X * toDSUnits(_units)
+	rhPointY = rhPoint.Y * toDSUnits(_units)
+	rhPointZ = rhPoint.Z * toDSUnits(_units)
+	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 
 #LineCurve conversion function
 def rhLineToLine(rhCurve):
-	rhStartPoint = rhCurve.PointAtStart
-	dsStartPoint = rhPoint3dToPoint(rhStartPoint)
-	rhEndPoint = rhCurve.PointAtEnd
-	dsEndPoint = rhPoint3dToPoint(rhEndPoint)
-	dsLine = Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
-	return dsLine
+	dsStartPoint = rhPoint3dToPoint(rhCurve.PointAtStart)
+	dsEndPoint = rhPoint3dToPoint(rhCurve.PointAtEnd)
+	return Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
 
 #convert rhino/gh geometry to ds geometry
 dsLines = []
@@ -53,16 +74,20 @@ for i in rhObjects:
 #Assign your output to the OUT variable
 OUT = dsLines</Script>
     </DSIronPythonNode.PythonNode>
-    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="1267196b-14fe-4012-8319-0e08314aa8c6" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Symbol guid="1267196b-14fe-4012-8319-0e08314aa8c6" type="Dynamo.Nodes.Symbol" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="Rhino Object(s)" />
     </Dynamo.Nodes.Symbol>
-    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="84032a55-fae9-4c75-898e-39074bc827cf" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Output guid="84032a55-fae9-4c75-898e-39074bc827cf" type="Dynamo.Nodes.Output" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="Line(s)" />
     </Dynamo.Nodes.Output>
+    <Dynamo.Nodes.Symbol guid="7a44d91f-1a7e-4e36-b14a-6537fc52174e" type="Dynamo.Nodes.Symbol" nickname="Input" x="0.215982721382261" y="61.3390928725702" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Units" />
+    </Dynamo.Nodes.Symbol>
   </Elements>
   <Connectors>
     <Dynamo.Models.ConnectorModel start="2821fa45-094d-4364-b580-d819da23e6e9" start_index="0" end="84032a55-fae9-4c75-898e-39074bc827cf" end_index="0" portType="0" />
     <Dynamo.Models.ConnectorModel start="1267196b-14fe-4012-8319-0e08314aa8c6" start_index="0" end="2821fa45-094d-4364-b580-d819da23e6e9" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="7a44d91f-1a7e-4e36-b14a-6537fc52174e" start_index="0" end="2821fa45-094d-4364-b580-d819da23e6e9" end_index="1" portType="0" />
   </Connectors>
   <Notes />
 </Workspace>

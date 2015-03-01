@@ -1,31 +1,39 @@
-<Workspace Version="0.7.2.9146" X="207.370905193608" Y="160.665146472158" zoom="1.545620359375" Description="Reads the file exported from Grasshopper (serializes it back into relevant Rhino geometry such as surfaces, points etc)" Category="Archi-lab_MantisShrimp.ReadGrasshopper" Name="Read GH File" ID="9648a159-7814-46f6-9097-16f1f9d27ec8">
+<Workspace Version="0.7.6.4145" X="202.370905193608" Y="170.665146472158" zoom="1" Name="Read GH File" ID="9648a159-7814-46f6-9097-16f1f9d27ec8" Description="Reads the file exported from Grasshopper (serializes it back into relevant Rhino geometry such as surfaces, points etc)" Category="Archi-lab_MantisShrimp.Grasshopper.ReadGH">
+  <NamespaceResolutionMap />
   <Elements>
-    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="65fdab90-38f4-4bf7-a1d6-115d2bf34e5f" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
-      <Script>#Copyright(c) 2014, Konrad Sobon
+    <DSIronPythonNode.PythonNode guid="65fdab90-38f4-4bf7-a1d6-115d2bf34e5f" type="DSIronPythonNode.PythonNode" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="2">
+      <Script>#Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
 import sys
 clr.AddReference('ProtoGeometry')
 
-RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
-if RhinoCommonPath not in sys.path:
-	sys.path.Add(RhinoCommonPath)
-clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
-
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
+
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\RhinoCommon.dll"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+if rhPath not in sys.path:
+	sys.path.Add(rhPath)
+	clr.AddReferenceToFileAndPath(rhDllPath)
 
 from Autodesk.DesignScript.Geometry import *
 from System import Array
 from System.Collections.Generic import *
 import Rhino as rc
 import pickle
-
+from mantisshrimp import *
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
 filePath = str(IN[0])
+_import = IN[1]
 
 class SerializeObjects(object):
 	def __init__(self, filePath, data = None):
@@ -43,19 +51,70 @@ class SerializeObjects(object):
 serializer = SerializeObjects(filePath)
 serializer.readFromFile()
 
+# recursive function to process any input list and output 
+# matching structure list
+def ProcessList(_func, _list, _units):
+    return map( lambda x: ProcessList(_func, x, _units) if type(x)==list else _func(x, _units), _list )
+    
+# function to convert MS Objects to DS objects
+def toDSObject(item, units):
+	if type(item) == MSPoint:
+		return item.toDSPoint(units)
+	elif type(item) == MSLine:
+		return item.toDSLine(units)
+	elif type(item) == MSPolyLine:
+		return item.toDSPolyCurve(units)
+	elif type(item) == MSEllipse:
+		return item.toDSEllipse(units)
+	elif type(item) == MSCircle:
+		return item.toDSCircle(units)
+	elif type(item) == MSArc:
+		return item.toDSArc(units)
+	elif type(item) == MSNurbsCurve:
+		return item.toDSNurbsCurve(units)
+	elif type(item) == MSMultiSpanNurbsCurve:
+		return item.toDSPolyCurve(units)
+	elif type(item) == MSPolyCurve:
+		return item.toDSPolyCurve(units)
+	elif type(item) == MSMesh:
+		return item.toDSMesh(units)
+	elif type(item) == MSNurbsSurface:
+		return item.toDSNurbsSurface(units)
+	else:
+		message = "Geometry type not yet supported"
+		return message
+
+message = None
+if _import:
+	serializedData = serializer.data
+	if type(serializedData) == MSData:
+		geometryOut = serializedData.data
+	else:
+		rhUnits = serializedData.pop(0).data
+		geometryOut = ProcessList(toDSObject, serializedData, rhUnits)
+else:
+	message = "Import set to false"
+
 #Assign your output to the OUT variable
-OUT = serializer.data</Script>
+if message == None:
+	OUT = geometryOut
+else:
+	OUT = '\n'.join('{:^35}'.format(s) for s in message.split('\n'))</Script>
     </DSIronPythonNode.PythonNode>
-    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="23e6a7a9-90fa-4195-9ac3-1bff7bb3151a" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Symbol guid="23e6a7a9-90fa-4195-9ac3-1bff7bb3151a" type="Dynamo.Nodes.Symbol" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="File Path" />
     </Dynamo.Nodes.Symbol>
-    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="d2c0fb80-3f6c-4b96-a156-d977fde76b28" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Output guid="d2c0fb80-3f6c-4b96-a156-d977fde76b28" type="Dynamo.Nodes.Output" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="Rhino Object(s)" />
     </Dynamo.Nodes.Output>
+    <Dynamo.Nodes.Symbol guid="7e901688-d758-4281-8689-20f21995faf3" type="Dynamo.Nodes.Symbol" nickname="Input" x="-1.65761011231507" y="63.4049619012706" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Import" />
+    </Dynamo.Nodes.Symbol>
   </Elements>
   <Connectors>
     <Dynamo.Models.ConnectorModel start="65fdab90-38f4-4bf7-a1d6-115d2bf34e5f" start_index="0" end="d2c0fb80-3f6c-4b96-a156-d977fde76b28" end_index="0" portType="0" />
     <Dynamo.Models.ConnectorModel start="23e6a7a9-90fa-4195-9ac3-1bff7bb3151a" start_index="0" end="65fdab90-38f4-4bf7-a1d6-115d2bf34e5f" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="7e901688-d758-4281-8689-20f21995faf3" start_index="0" end="65fdab90-38f4-4bf7-a1d6-115d2bf34e5f" end_index="1" portType="0" />
   </Connectors>
   <Notes />
 </Workspace>

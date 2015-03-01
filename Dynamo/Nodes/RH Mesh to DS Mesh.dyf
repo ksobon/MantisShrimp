@@ -1,34 +1,58 @@
-<Workspace Version="0.7.2.24887" X="-75.6188811015119" Y="174.303203293736" zoom="1.33823125" Description="Converts Rhino/Grasshopper meshes to Design Script meshes." Category="Archi-lab_MantisShrimp.ReadRhino" Name="RH Mesh to DS Mesh" ID="1da4f6c4-a8ef-495d-8bec-5e6342493a87">
+<Workspace Version="0.7.6.4145" X="-66.823824678428" Y="233.057892815547" zoom="1" Name="RH Mesh to DS Mesh" ID="59e01744-8cc9-4403-81b0-6e4040406826" Description="Converts Rhino/Grasshopper meshes to Design Script meshes." Category="Archi-lab_MantisShrimp.Rhinoceros.Geometry">
+  <NamespaceResolutionMap />
   <Elements>
-    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="393e2c6f-3e7d-4ae0-b02e-ff8bd9c377ce" nickname="Python Script" x="359.165974068158" y="0.647508487364121" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
-      <Script>#Copyright(c) 2014, Konrad Sobon
+    <DSIronPythonNode.PythonNode guid="393e2c6f-3e7d-4ae0-b02e-ff8bd9c377ce" type="DSIronPythonNode.PythonNode" nickname="Python Script" x="359.165974068158" y="0.647508487364121" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="2">
+      <Script>#Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
 import sys
 clr.AddReference('ProtoGeometry')
 
-RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
-if RhinoCommonPath not in sys.path:
-	sys.path.Add(RhinoCommonPath)
-clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
-
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
 
-import Rhino as rc
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\RhinoCommon.dll"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+if rhPath not in sys.path:
+	sys.path.Add(rhPath)
+	clr.AddReferenceToFileAndPath(rhDllPath)
+
 from Autodesk.DesignScript.Geometry import *
-import math
+import Rhino as rc
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
 rhObjects = IN[0]
+_units = IN[1]
 
-#3dPoint Conversion
+#unit conversion function from Rhino to DS
+def toDSUnits(_units):
+	if _units == rc.UnitSystem.Millimeters:
+		return 0.001
+	elif _units == rc.UnitSystem.Centimeters:
+		return 0.01
+	elif _units == rc.UnitSystem.Decimeters:
+		return 0.1
+	elif _units == rc.UnitSystem.Meters:
+		return 1
+	elif _units == rc.UnitSystem.Inches:
+		return 0.0254
+	elif _units == rc.UnitSystem.Feet:
+		return 0.3048
+	elif _units == rc.UnitSystem.Yards:
+		return 0.9144
+
+#3dPoint Conversion function
 def rhPoint3dToPoint(rhPoint):
-	rhPointX = rhPoint.X
-	rhPointY = rhPoint.Y
-	rhPointZ = rhPoint.Z
+	rhPointX = rhPoint.X * toDSUnits(_units)
+	rhPointY = rhPoint.Y * toDSUnits(_units)
+	rhPointZ = rhPoint.Z * toDSUnits(_units)
 	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 	return dsPoint
 
@@ -67,21 +91,24 @@ for i in rhObjects:
 		pass
 	if i.ToString() == "Rhino.Geometry.Mesh":
 		dsMeshes.append(rhMeshToMesh(i))
-		
+
 #Assign your output to the OUT variable
-OUT = dsMeshes
-</Script>
+OUT = dsMeshes</Script>
     </DSIronPythonNode.PythonNode>
-    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="a2142bae-4413-495b-b4a6-a4eae3995776" nickname="Output" x="513.165974068158" y="1" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Output guid="a2142bae-4413-495b-b4a6-a4eae3995776" type="Dynamo.Nodes.Output" nickname="Output" x="591.844544714542" y="-0.111370941849771" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="Mesh(es)" />
     </Dynamo.Nodes.Output>
-    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="2a0c4cc6-0497-42ae-9ac4-e4c339e2f6de" nickname="Input" x="249.430549541802" y="0.279228052897139" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Symbol guid="2a0c4cc6-0497-42ae-9ac4-e4c339e2f6de" type="Dynamo.Nodes.Symbol" nickname="Input" x="249.430549541802" y="0.279228052897139" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="Object(s)" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Symbol guid="4ed753bb-d5a5-4c77-823c-a6b0412f2fd4" type="Dynamo.Nodes.Symbol" nickname="Input" x="245.624765006193" y="62.6022408889814" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Units" />
     </Dynamo.Nodes.Symbol>
   </Elements>
   <Connectors>
     <Dynamo.Models.ConnectorModel start="393e2c6f-3e7d-4ae0-b02e-ff8bd9c377ce" start_index="0" end="a2142bae-4413-495b-b4a6-a4eae3995776" end_index="0" portType="0" />
     <Dynamo.Models.ConnectorModel start="2a0c4cc6-0497-42ae-9ac4-e4c339e2f6de" start_index="0" end="393e2c6f-3e7d-4ae0-b02e-ff8bd9c377ce" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="4ed753bb-d5a5-4c77-823c-a6b0412f2fd4" start_index="0" end="393e2c6f-3e7d-4ae0-b02e-ff8bd9c377ce" end_index="1" portType="0" />
   </Connectors>
   <Notes />
 </Workspace>

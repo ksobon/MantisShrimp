@@ -1,21 +1,29 @@
-<Workspace Version="0.7.2.24887" X="101.70439040625" Y="54.819342515625" zoom="1.545620359375" Description="Queries Rhino Object for its name." Category="Archi-lab_MantisShrimp.ReadRhino" Name="Get Rhino Object Name" ID="9994c11e-4056-4c65-ae54-dd2e20ae7877">
+<Workspace Version="0.7.6.4145" X="101.70439040625" Y="54.819342515625" zoom="1" Name="Get Rhino Object Name" ID="732afdaa-44ef-4b0a-bee9-4e8bcad44c54" Description="Queries Rhino Object for its name." Category="Archi-lab_MantisShrimp.Rhinoceros.Properties">
+  <NamespaceResolutionMap />
   <Elements>
-    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="725789b5-fe8a-478c-a099-2a0fee653f51" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
-      <Script>#Copyright(c) 2014, Konrad Sobon
+    <DSIronPythonNode.PythonNode guid="725789b5-fe8a-478c-a099-2a0fee653f51" type="DSIronPythonNode.PythonNode" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
+      <Script>#Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
 import sys
 clr.AddReference('ProtoGeometry')
 
-RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
-if RhinoCommonPath not in sys.path:
-	sys.path.Add(RhinoCommonPath)
-clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
-
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
 
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\RhinoCommon.dll"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+if rhPath not in sys.path:
+	sys.path.Add(rhPath)
+	clr.AddReferenceToFileAndPath(rhDllPath)
+
+from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
 
 #The inputs to this node will be stored as a list in the IN variable.
@@ -30,10 +38,10 @@ for i in rhObjects:
 #Assign your output to the OUT variable
 OUT = rhNames</Script>
     </DSIronPythonNode.PythonNode>
-    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="a790b0b1-db5d-48d5-a645-ff651e944185" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Symbol guid="a790b0b1-db5d-48d5-a645-ff651e944185" type="Dynamo.Nodes.Symbol" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="Rhino Object(s)" />
     </Dynamo.Nodes.Symbol>
-    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="ed698bcd-1163-4936-b86d-6a0caeb3cc4e" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Output guid="ed698bcd-1163-4936-b86d-6a0caeb3cc4e" type="Dynamo.Nodes.Output" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="Name(s)" />
     </Dynamo.Nodes.Output>
   </Elements>

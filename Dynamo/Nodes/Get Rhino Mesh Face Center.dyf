@@ -1,50 +1,71 @@
-<Workspace Version="0.7.4.3090" X="84.5372771003379" Y="99.8311975102254" zoom="1.545620359375" Description="This node will query a mesh for a face center. " Category="Archi-lab_MantisShrimp.ReadRhino" Name="Get Rhino Mesh Face Center" ID="acc4cdfb-cdb1-4eb5-b42e-756cc1d3d09f">
+<Workspace Version="0.7.6.4145" X="84.5372771003379" Y="99.8311975102254" zoom="1" Name="Get Rhino Mesh Face Center" ID="dc665acc-e904-4a67-82e0-1557bbf0a375" Description="This node will query a mesh for a face center. " Category="Archi-lab_MantisShrimp.Rhinoceros.Properties">
+  <NamespaceResolutionMap />
   <Elements>
-    <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="23d6c9f2-2509-422f-8082-5feef7a8ba6a" nickname="Python Script" x="250" y="0" isVisible="false" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
-      <Script>#Copyright(c) 2014, Konrad Sobon
+    <DSIronPythonNode.PythonNode guid="23d6c9f2-2509-422f-8082-5feef7a8ba6a" type="DSIronPythonNode.PythonNode" nickname="Python Script" x="250" y="0" isVisible="false" isUpstreamVisible="true" lacing="Disabled" inputcount="2">
+      <Script>#Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
 import sys
 clr.AddReference('ProtoGeometry')
 
-RhinoCommonPath = r'C:\Program Files\Rhinoceros 5 (64-bit)\System'
-if RhinoCommonPath not in sys.path:
-	sys.path.Add(RhinoCommonPath)
-clr.AddReferenceToFileAndPath(RhinoCommonPath + r"\RhinoCommon.dll")
-
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
 
-import Rhino as rc
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\RhinoCommon.dll"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+if rhPath not in sys.path:
+	sys.path.Add(rhPath)
+	clr.AddReferenceToFileAndPath(rhDllPath)
+
 from Autodesk.DesignScript.Geometry import *
-import math
+import Rhino as rc
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
 rhObjects = IN[0]
+_units = IN[1]
 
-#3dPoint Conversion
+#unit conversion function from Rhino to DS
+def toDSUnits(_units):
+	if _units == rc.UnitSystem.Millimeters:
+		return 0.001
+	elif _units == rc.UnitSystem.Centimeters:
+		return 0.01
+	elif _units == rc.UnitSystem.Decimeters:
+		return 0.1
+	elif _units == rc.UnitSystem.Meters:
+		return 1
+	elif _units == rc.UnitSystem.Inches:
+		return 0.0254
+	elif _units == rc.UnitSystem.Feet:
+		return 0.3048
+	elif _units == rc.UnitSystem.Yards:
+		return 0.9144
+
+#3dPoint Conversion function
 def rhPoint3dToPoint(rhPoint):
-	rhPointX = rhPoint.X
-	rhPointY = rhPoint.Y
-	rhPointZ = rhPoint.Z
-	dsPoint = Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
-	return dsPoint
+	rhPointX = rhPoint.X * toDSUnits(_units)
+	rhPointY = rhPoint.Y * toDSUnits(_units)
+	rhPointZ = rhPoint.Z * toDSUnits(_units)
+	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 
 #convert rhino/gh geometry to ds geometry
-dsMeshes = []
-values = []
-points = []
-for i in rhObjects:
+points = [[] for i in range(len(rhObjects))]
+for index, item in enumerate(rhObjects):
 	try:
-		i = i.Geometry
+		item = item.Geometry
 	except:
 		pass
-	if i.ToString() == "Rhino.Geometry.Mesh":
-		faces = i.Faces
+	if item.ToString() == "Rhino.Geometry.Mesh":
+		faces = item.Faces
 		for i in range(0, faces.Count, 1):
-			points.append(rhPoint3dToPoint(faces.GetFaceCenter(i)))
+			points[index].append(rhPoint3dToPoint(faces.GetFaceCenter(i)))
 	else:
 		message = "Please provide Mesh to extract \nFace Center points."
 
@@ -54,16 +75,20 @@ if len(points) == 0:
 else:
 	OUT = points</Script>
     </DSIronPythonNode.PythonNode>
-    <Dynamo.Nodes.Symbol type="Dynamo.Nodes.Symbol" guid="3a2081ca-5ab5-42bd-ab30-a06127855699" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Symbol guid="3a2081ca-5ab5-42bd-ab30-a06127855699" type="Dynamo.Nodes.Symbol" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="Rhino Object(s)" />
     </Dynamo.Nodes.Symbol>
-    <Dynamo.Nodes.Output type="Dynamo.Nodes.Output" guid="5c23f91b-3781-4f34-9e7b-de61062172ea" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+    <Dynamo.Nodes.Output guid="5c23f91b-3781-4f34-9e7b-de61062172ea" type="Dynamo.Nodes.Output" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
       <Symbol value="Face Center(s)" />
     </Dynamo.Nodes.Output>
+    <Dynamo.Nodes.Symbol guid="d41aefdb-af16-4c2c-b1e3-707930555282" type="Dynamo.Nodes.Symbol" nickname="Input" x="-2.30459951947086" y="60.8170042726473" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Units" />
+    </Dynamo.Nodes.Symbol>
   </Elements>
   <Connectors>
     <Dynamo.Models.ConnectorModel start="23d6c9f2-2509-422f-8082-5feef7a8ba6a" start_index="0" end="5c23f91b-3781-4f34-9e7b-de61062172ea" end_index="0" portType="0" />
     <Dynamo.Models.ConnectorModel start="3a2081ca-5ab5-42bd-ab30-a06127855699" start_index="0" end="23d6c9f2-2509-422f-8082-5feef7a8ba6a" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="d41aefdb-af16-4c2c-b1e3-707930555282" start_index="0" end="23d6c9f2-2509-422f-8082-5feef7a8ba6a" end_index="1" portType="0" />
   </Connectors>
   <Notes />
 </Workspace>

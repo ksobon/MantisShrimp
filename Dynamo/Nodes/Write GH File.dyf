@@ -1,0 +1,235 @@
+<Workspace Version="0.7.6.4145" X="277.695584840826" Y="156.787303014419" zoom="1" Name="Write GH File" ID="cb9934f8-6394-45c9-a0f4-b944426af146" Description="This node exports Dynamo (Design Script) geometry/data to Grasshopper." Category="Archi-lab_MantisShrimp.Grasshopper.WriteGH">
+  <NamespaceResolutionMap />
+  <Elements>
+    <DSIronPythonNode.PythonNode guid="1cdd78c8-52ad-495f-b7f0-f856d201fa89" type="DSIronPythonNode.PythonNode" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="3">
+      <Script>#Copyright(c) 2015, Konrad Sobon
+# @arch_laboratory, http://archi-lab.net
+
+import clr
+import sys
+clr.AddReference('ProtoGeometry')
+
+pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
+sys.path.append(pyt_path)
+
+import os
+appDataPath = os.getenv('APPDATA')
+msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\RhinoCommon.dll"
+if msPath not in sys.path:
+	sys.path.Add(msPath)
+if rhPath not in sys.path:
+	sys.path.Add(rhPath)
+	clr.AddReferenceToFileAndPath(rhDllPath)
+
+from Autodesk.DesignScript.Geometry import *
+from System import Array
+from System.Collections.Generic import *
+import Rhino as rc
+import pickle
+from mantisshrimp import *
+
+#The inputs to this node will be stored as a list in the IN variable.
+dataEnteringNode = IN
+
+dsObjects = IN[0]
+_filePath = str(IN[1])
+_export = IN[2]
+
+class SerializeObjects(object):
+    
+    def __init__(self, filePath, data = None):
+        
+        # create directory if it is not created
+        folder, fileName = os.path.split(filePath)
+        if not os.path.isdir(folder):
+            os.mkdir(folder)
+        
+        self.filePath = filePath
+        self.data = data
+        
+    def saveToFile(self):
+    	with open(self.filePath, 'wb') as outf:
+			pickle.dump(self.data, outf)
+            
+    def readFromFile(self):
+        with open(self.filePath, 'rb') as inf:
+            self.data = pickle.load(inf)
+
+# recursive function to process any input list and output 
+# matching structure list
+def process_list(_func, _list):
+    return map( lambda x: process_list(_func, x) if type(x)==list else _func(x), _list )
+# function to convert DS Point to MS Point
+def toMSPoint(_point):
+	return MSPoint(_point.X, _point.Y, _point.Z)
+
+def toMSLine(item):
+	msStartPt = MSPoint(item.StartPoint.X, item.StartPoint.Y, item.StartPoint.Z)
+	msEndPt = MSPoint(item.EndPoint.X, item.EndPoint.Y, item.EndPoint.Z)
+	return MSLine(msStartPt, msEndPt)
+
+def toMSPoint(item):
+	return MSPoint(item.X, item.Y, item.Z)
+
+def toMSArc(item):
+	msStartPt = toMSPoint(item.StartPoint)
+	msEndPt = toMSPoint(item.EndPoint)
+	msMidPoint = toMSPoint(item.PointAtParameter(0.5))
+	return MSArc(msStartPt, msMidPoint, msEndPt)
+
+def toMSEllipse(item):
+	msOrigin = toMSPoint(item.CenterPoint)
+	msVector = MSVector(item.Normal.X, item.Normal.Y, item.Normal.Z)
+	msPlane = MSPlane(msOrigin, msVector)
+	return MSEllipse(msPlane, item.MinorAxis.Length, item.MajorAxis.Length)
+
+def toMSCircle(item):
+	msOrigin = toMSPoint(item.CenterPoint)
+	msVector = MSVector(item.Normal.X, item.Normal.Y, item.Normal.Z)
+	msPlane = MSPlane(msOrigin, msVector)
+	return MSCircle(msPlane, item.Radius)
+
+def toMSNurbsCurve(item):
+	msPoints4d = []
+	for pt, w in zip(item.ControlPoints(), item.Weights()):
+		msPoints4d.append(MSPoint4d(pt.X, pt.Y, pt.Z, w))
+	return MSNurbsCurve(msPoints4d, item.Weights(), item.Knots(), item.Degree)
+
+# use these two functions to convert generic Curve
+# to Line or Arc since PolyCurve.Curves() method
+# returns only generic curves
+
+def tryGetArc(item):
+	startPoint = item.StartPoint
+	endPoint = item.EndPoint
+	tangent = item.TangentAtParameter(0)
+	dsArc = Arc.ByStartPointEndPointStartTangent(startPoint, endPoint, tangent)
+	if round(dsArc.Length, 4) == round(item.Length, 4):
+		return dsArc
+	else:
+		return None
+
+def tryGetLine(item):
+	startPoint = item.StartPoint
+	endPoint = item.EndPoint
+	distance = startPoint.DistanceTo(endPoint)
+	if round(item.Length, 4) == round(distance, 4):
+		return Line.ByStartPointEndPoint(startPoint, endPoint)
+	else:
+		return None
+
+# this is still work in progress
+def toMSPolyLine(item):
+	segments, msSegments = [], []
+	for crv in item.Curves():
+		segments.append(tryGetLine(crv))
+	if all(type(x) == Line for x in segments):
+		for i in segments:
+			msSegments.append(toMSLine(i))
+		return MSPolyLine(msSegments)
+	else:
+		return None
+"""
+def toMSPolyCurve(item):
+	segments = []
+	for crv in item.Curves():
+		if tryGetLine(crv) != None:
+			segments.append(toMSLine(tryGetLine(crv)))
+		elif tryGetArc(crv) != None:
+			segments.append(toMSArc(tryGetArc(crv)))
+		else:
+			segments.append(toMSNurbsCurve(crv.ToNurbsCurve()))
+	return segments
+"""
+def toMSMesh(item):
+	msPoints = []
+	for pt in item.VertexPositions:
+		msPoints.append(MSPoint(pt.X, pt.Y, pt.Z))
+	msFaces = []
+	for i in item.FaceIndices:
+		if i.Count == 3:
+			msFaces.append(MSMeshFace(i.A, i.B, i.C))
+		else:
+			msFaces.append(MSMeshFace(i.A, i.B, i.C, i.D))
+	return MSMesh(msPoints, msFaces)
+
+def toMSNurbsSurface(item):
+	controlPoints = list(item.ControlPoints())
+	msControlPoints = [[] for i in range(len(controlPoints))]
+	for index, _list in enumerate(controlPoints):
+		for pt in _list:
+			msControlPoints[index].append(MSPoint(pt.X, pt.Y, pt.Z))
+	rational = item.IsRational
+	if rational:
+		weights = None
+	else:
+		weights = item.Weights()
+	return MSNurbsSurface(msControlPoints, weights, item.UKnots(), item.VKnots(), item.DegreeU, item.DegreeV, item.NumControlPointsU, item.NumControlPointsV, rational)
+
+# funtions to convert DS Geometry to MS Geometry
+# Points
+def toMSObject(item):
+	if type(item) == Point:
+		return MSPoint(item.X, item.Y, item.Z)
+	elif type(item) == Line:
+		return toMSLine(item)
+	elif type(item) == PolyCurve:
+		if toMSPolyLine(item) == None:
+			print("None")
+		else:
+			return toMSPolyLine(item)
+	elif type(item) == Circle:
+		return toMSCircle(item)
+	elif type(item) == Ellipse:
+		return toMSEllipse(item)
+	elif type(item) == Arc:
+		return toMSArc(item)
+	elif type(item) == NurbsCurve:
+		return toMSNurbsCurve(item)
+	elif type(item) == Mesh:
+		return toMSMesh(item)
+	elif type(item) == NurbsSurface:
+		return toMSNurbsSurface(item)
+	else:
+		return MSData(item)
+
+if _export:
+	outGeometry = process_list(toMSObject, dsObjects)
+	
+	try:
+		serializer = SerializeObjects(_filePath, outGeometry)
+		serializer.saveToFile()
+		message = "File is exported to \n" + _filePath + ".\n" + \
+			"Now you can use Grasshopper to import the file."
+	except:
+		message = "Export failed. Try again."
+		pass
+else:
+	message = "Export set to false."
+
+#Assign your output to the OUT variable
+OUT = '\n'.join('{:^35}'.format(s) for s in message.split('\n'))</Script>
+    </DSIronPythonNode.PythonNode>
+    <Dynamo.Nodes.Symbol guid="42b47784-2441-4d34-b214-8500e426c11b" type="Dynamo.Nodes.Symbol" nickname="Input" x="0" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Geometry" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Symbol guid="e919cec2-1b03-458f-a33c-1e0739baf487" type="Dynamo.Nodes.Symbol" nickname="Input" x="0" y="150" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="File Path" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Symbol guid="0ce4c357-c4d3-4bcb-a7a9-172a24678ca6" type="Dynamo.Nodes.Symbol" nickname="Input" x="0" y="300" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="Export" />
+    </Dynamo.Nodes.Symbol>
+    <Dynamo.Nodes.Output guid="94ed5f87-31e5-480e-87c3-6c6f52a9feb2" type="Dynamo.Nodes.Output" nickname="Output" x="449" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled">
+      <Symbol value="OUT" />
+    </Dynamo.Nodes.Output>
+  </Elements>
+  <Connectors>
+    <Dynamo.Models.ConnectorModel start="1cdd78c8-52ad-495f-b7f0-f856d201fa89" start_index="0" end="94ed5f87-31e5-480e-87c3-6c6f52a9feb2" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="42b47784-2441-4d34-b214-8500e426c11b" start_index="0" end="1cdd78c8-52ad-495f-b7f0-f856d201fa89" end_index="0" portType="0" />
+    <Dynamo.Models.ConnectorModel start="e919cec2-1b03-458f-a33c-1e0739baf487" start_index="0" end="1cdd78c8-52ad-495f-b7f0-f856d201fa89" end_index="1" portType="0" />
+    <Dynamo.Models.ConnectorModel start="0ce4c357-c4d3-4bcb-a7a9-172a24678ca6" start_index="0" end="1cdd78c8-52ad-495f-b7f0-f856d201fa89" end_index="2" portType="0" />
+  </Connectors>
+  <Notes />
+</Workspace>

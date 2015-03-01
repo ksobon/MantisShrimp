@@ -1,7 +1,7 @@
-<Workspace Version="0.7.4.3090" X="231.588820039635" Y="137.475725198227" zoom="1.545620359375" Description="This node converts Grasshopper UV coordinates obtained as a string to Dynamo compatible Design Script UV Coordinate." Category="Archi-lab_MantisShrimp.ReadGrasshopper" Name="GH UV String to DS UV" ID="60b75e84-0331-4e6d-84aa-7828ea272cc8">
+<Workspace Version="0.7.5.3566" X="231.588820039635" Y="137.475725198227" zoom="1.545620359375" Description="This node converts Grasshopper UV coordinates obtained as a string to Dynamo compatible Design Script UV Coordinate." Category="Archi-lab_MantisShrimp.Grasshopper.Conversion" Name="GH UV String to DS UV" ID="5e474d0c-b1fe-4cd9-93f4-4fc0a60a9363">
   <Elements>
     <DSIronPythonNode.PythonNode type="DSIronPythonNode.PythonNode" guid="46e3d0d7-080f-4a63-8c68-c8a6e01ce3ff" nickname="Python Script" x="250" y="0" isVisible="true" isUpstreamVisible="true" lacing="Disabled" inputcount="1">
-      <Script>#Copyright(c) 2014, Konrad Sobon
+      <Script>#Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
