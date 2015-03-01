@@ -14,10 +14,4 @@ Couple things to check before you can get started:
 
   3. Add Mantis Shrimp User Objects to your Grasshopper Special Folder>User Object or simply drag and drop onto Grasshopper canvas. Instructions can be found here: http://archi-lab.net/?p=540
 
-  4. Add all of the Dynamo custom nodes to Dynamo's definitions folder or install them directly from Package Manager. Instructions can be found here: http://archi-lab.net/?p=540
-
-  6. Read this Getting Started tutorial: http://archi-lab.net/?p=540
-
-  7. Read this Export/Import example tutorial: http://archi-lab.net/?p=554
-
-  8. Read this Export/Import 3dm files, example tutorial: http://archi-lab.net/?p=578
+  4. Watch these videos: http://archi-lab.net/?p=1486
