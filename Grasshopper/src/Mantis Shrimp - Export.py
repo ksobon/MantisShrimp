@@ -247,6 +247,7 @@ def toMSObject(item):
 if _export:
     # make sure data tree paths are correct format
     # huge thanks to djordje for help with implementing this method
+    _geometry.SimplifyPaths()
     branches = _geometry.Branches
     paths = _geometry.Paths
     if len(paths) != 1:
@@ -265,6 +266,7 @@ if _export:
         serializer.saveToFile()
         warnType = gh.GH_RuntimeMessageLevel.Remark
         msg = "File is exported to " + _filePath + "Now you can use Dynamo to import the file."
+        ghenv.Component.AddRuntimeMessage(warnType, msg)
     except Exception, e:
         warnType = gh.GH_RuntimeMessageLevel.Warning
         msg = "Failed to export: \n" + `e`
