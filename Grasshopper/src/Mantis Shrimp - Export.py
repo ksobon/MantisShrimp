@@ -78,7 +78,7 @@ def rhLineCurveToMSLine(item):
     return MSLine(msStartPt, msEndPt)
 
 def rhPolyLineToMSPolyLine(item):
-    if type(item) == rc.Geometry.PolylineCurve:
+    if type(item) == rc.Geometry.PolylineCurve or type(item) == rc.Geometry.PolyCurve:
         if item.IsPolyline():
             item = item.TryGetPolyline()[1]
     segments = []
@@ -211,7 +211,7 @@ def toMSObject(item):
         return rhLineCurveToMSLine(item)
     elif type(item) == rc.Geometry.PolyCurve and item.IsPolyline() == True:
         return rhPolyLineToMSPolyLine(item)
-    elif type(item) == rc.Geometry.Polyline or type(item) == rc.Geometry.Polyline:
+    elif type(item) == rc.Geometry.Polyline or type(item) == rc.Geometry.PolyCurve:
         return rhPolyLineToMSPolyLine(item)
     elif type(item) == rc.Geometry.NurbsCurve and item.IsClosed == True:
         if item.IsEllipse() == True:
@@ -245,7 +245,19 @@ def toMSObject(item):
         return MSData(item)
 
 if _export:
-    geometryList = TreeToList(_geometry)
+    # make sure data tree paths are correct format
+    # huge thanks to djordje for help with implementing this method
+    branches = _geometry.Branches
+    paths = _geometry.Paths
+    if len(paths) != 1:
+        newPaths = [i.PrependElement(0) for i in paths]
+        newTree = DataTree[object]()
+        for i in range(_geometry.BranchCount):
+            newTree.AddRange(branches[i], newPaths[i])
+        geometryList = TreeToList(newTree)
+    else:
+        geometryList = TreeToList(_geometry)
+
     geometryOut = process_list(toMSObject, geometryList)
     geometryOut.insert(0, MSData(sc.doc.ModelUnitSystem.ToString()))
     try:
