@@ -27,6 +27,7 @@ from mantisshrimp import *
 import Rhino as rc
 import cPickle as pickle
 import Grasshopper.Kernel as gh
+from Grasshopper import DataTree
 
 class SerializeObjects(object):
     
@@ -67,13 +68,25 @@ def TreeToList(input, RetrieveBase = lambda x: x[0]):
 
 
 if _export:
-    # convert incoming DataTree to Python List object
-    dataOut = MSData(TreeToList(_data))
+    # make sure data tree paths are correct format
+    # huge thanks to djordje for help with implementing this method
+    _data.SimplifyPaths()
+    branches = _data.Branches
+    paths = _data.Paths
+    if len(paths) != 1:
+        newPaths = [i.PrependElement(0) for i in paths]
+        newTree = DataTree[object]()
+        for i in range(_data.BranchCount):
+            newTree.AddRange(branches[i], newPaths[i])
+        dataOut = MSData(TreeToList(newTree))
+    else:
+        dataOut = MSData(TreeToList(_data))
     try:
         serializer = SerializeObjects(_filePath, dataOut)
         serializer.saveToFile()
         warnType = gh.GH_RuntimeMessageLevel.Remark
         msg = "File is exported to " + _filePath + "Now you can use Dynamo to import the file."
+        ghenv.Component.AddRuntimeMessage(warnType, msg)
     except Exception, e:
         warnType = gh.GH_RuntimeMessageLevel.Warning
         msg = "Failed to export: \n" + `e`
