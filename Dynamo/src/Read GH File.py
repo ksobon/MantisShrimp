@@ -87,6 +87,7 @@ if _import:
 		geometryOut = serializedData.data
 	else:
 		rhUnits = serializedData.pop(0).data
+		del serializedData[0]
 		geometryOut = ProcessList(toDSObject, serializedData, rhUnits)
 else:
 	message = "Import set to false"
