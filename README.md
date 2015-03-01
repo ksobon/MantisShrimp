@@ -12,6 +12,4 @@ Couple things to check before you can get started:
   
   2. Make sure that you have GhPython plug-in for Grasshopper installed. All Mantis Shrimp User Objects for Grasshopper are written in Python so you will need that plug-in for them to work. Download it at: http://www.food4rhino.com/project/ghpython?ufh 
 
-  3. Add Mantis Shrimp User Objects to your Grasshopper Special Folder>User Object or simply drag and drop onto Grasshopper canvas. Instructions can be found here: http://archi-lab.net/?p=540
-
-  4. Watch these videos: http://archi-lab.net/?p=1486
+  3. Watch these videos: http://archi-lab.net/?p=1486
