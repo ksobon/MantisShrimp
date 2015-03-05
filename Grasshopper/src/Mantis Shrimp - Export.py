@@ -236,11 +236,11 @@ def toMSObject(item):
         return rhPolyCurveToMSPolyCurve(item)
     elif type(item) == rc.Geometry.Mesh:
         return rhMeshToMSMesh(item)
-    if type(item) == rc.Geometry.Brep:
-        return rhBrepToMsBrep(item)
     elif type(item) == rc.Geometry.Brep and item.IsSurface == True:
         item = item.Faces[0].ToNurbsSurface()
         return rhNurbsSurfaceToMSNurbsSurface(item)
+    elif type(item) == rc.Geometry.Brep:
+        return rhBrepToMsBrep(item)
     else:
         return MSData(item)
 
