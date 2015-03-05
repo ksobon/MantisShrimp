@@ -28,19 +28,19 @@ rhObjects = IN[0]
 keys = IN[1]
 
 #extract all user strings from rhino object
-try:
-	item = item.Geometry
-except:
-	pass
-if not any(isinstance(item, list) for item in keys):
-	userStrings = []
-	for key in keys[index]:
-		userStrings[index].extend(item.GetUserStrings().GetValues(key))
-else:
-	userStrings = [[] for i in range(len(rhObjects))]
-	for index, item in enumerate(rhObjects):
-		for key in keys[index]:
-			userStrings[index].extend(item.GetUserStrings().GetValues(key))
+
+userStrings = []
+for i, key in zip(rhObjects, keys):
+	try:
+		item = i.Geometry
+	except:
+		pass
+	if item == None:
+		item = i
+	userSubStrings = []
+	for i in range(0, len(key),1):
+		userSubStrings.extend(item.GetUserStrings().GetValues(key[i]))
+	userStrings.append(userSubStrings)
 
 #Assign your output to the OUT variable
 OUT = userStrings
