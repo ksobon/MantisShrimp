@@ -12,7 +12,7 @@ import os
 appDataPath = os.getenv('APPDATA')
 msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
 rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\RhinoCommon.dll"
+rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
 	sys.path.Add(msPath)
 if rhPath not in sys.path:
@@ -69,9 +69,15 @@ def rhPlaneToPlane(rhPlane):
 
 #arc conversion function
 def rhArcToArc(rhArc):
-	dsStartPoint = rhPoint3dToPoint(rhArc.Arc.StartPoint)
-	dsEndPoint = rhPoint3dToPoint(rhArc.Arc.EndPoint)
-	dsCenter = rhPoint3dToPoint(rhArc.Arc.Center)
+	try:
+		dsStartPoint = rhPoint3dToPoint(rhArc.Arc.StartPoint)
+		dsEndPoint = rhPoint3dToPoint(rhArc.Arc.EndPoint)
+		dsCenter = rhPoint3dToPoint(rhArc.Arc.Center)
+	except:
+		dsStartPoint = rhPoint3dToPoint(rhArc.StartPoint)
+		dsEndPoint = rhPoint3dToPoint(rhArc.EndPoint)
+		dsCenter = rhPoint3dToPoint(rhArc.Center)
+		pass
 	dsArc = Arc.ByCenterPointStartPointEndPoint(dsCenter, dsStartPoint, dsEndPoint)
 	return dsArc
 
