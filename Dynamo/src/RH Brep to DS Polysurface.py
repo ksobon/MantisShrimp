@@ -12,7 +12,7 @@ import os
 appDataPath = os.getenv('APPDATA')
 msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
 rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\RhinoCommon.dll"
+rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
 	sys.path.Add(msPath)
 if rhPath not in sys.path:
@@ -75,8 +75,13 @@ def rhPlaneToPlane(rhPlane):
 
 #LineCurve conversion function
 def rhLineToLine(rhCurve):
-	dsStartPoint = rhPoint3dToPoint(rhCurve.PointAtStart)
-	dsEndPoint = rhPoint3dToPoint(rhCurve.PointAtEnd)
+	try:
+		dsStartPoint = rhPoint3dToPoint(rhCurve.From)
+		dsEndPoint = rhPoint3dToPoint(rhCurve.To)
+	except:
+		dsStartPoint = rhPoint3dToPoint(rhCurve.PointAtStart)
+		dsEndPoint = rhPoint3dToPoint(rhCurve.PointAtEnd)
+		pass
 	return Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
 
 #LineCurve conversion function
