@@ -7,7 +7,7 @@ Grasshopper and Dynamo interop library
 """
 import clr
 import sys
-sys.path.append(r"C:\Program Files\Dynamo 0.7")
+sys.path.append(r"C:\Program Files\Dynamo 0.8")
 clr.AddReference('ProtoGeometry')
 
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
@@ -15,23 +15,14 @@ sys.path.append(pyt_path)
 
 import os
 appDataPath = os.getenv('APPDATA')
-msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
 	sys.path.Add(msPath)
-
-possibleRhPaths, message = [], None
-possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll")
-possibleRhPaths.append(r"C:\Program Files\Rhinoceros 5.0 (64-bit)\System\RhinoCommon.dll")
-possibleRhPaths.append(r"C:\Program Files\McNeel\Rhinoceros 5.0\System\RhinoCommon.dll")
-possibleRhPaths.append(msPath)
-checkPaths = map(lambda x: os.path.exists(x), possibleRhPaths)
-for i, j in zip(possibleRhPaths, checkPaths):
-	if j and i not in sys.path:
-		sys.path.Add(i)
-		clr.AddReferenceToFileAndPath(i)
-		break
-	else:
-		message = "Please provide a valid path to RhinoCommon.dll"
+if rhPath not in sys.path:
+	sys.path.Add(rhPath)
+	clr.AddReferenceToFileAndPath(rhDllPath)
 
 from System import *
 from System.Collections.Generic import *
@@ -93,11 +84,11 @@ class MSVector(object):
                 self.z = z
         def addData(self, data):
                 self.data = data
-        def toDSVector(self, units):
-                dsVector = ds.Geometry.Vector.ByCoordinates(self.x * toDSUnits(units), self.y * toDSUnits(units), self.z * toDSUnits(units))
+        def toDSVector(self):
+                dsVector = ds.Geometry.Vector.ByCoordinates(self.x, self.y, self.z)
                 return dsVector
-        def toRHVector3d(self, units):
-                rhVector = rc.Geometry.Vector3d(self.x * toRHUnits(units), self.y * toRHUnits(units), self.z * toRHUnits(units))
+        def toRHVector3d(self):
+                rhVector = rc.Geometry.Vector3d(self.x, self.y, self.z)
                 return rhVector
 
 class MSPoint(object):
@@ -108,11 +99,11 @@ class MSPoint(object):
                 self.z = z
         def addData(self, data):
                 self.data = data
-        def toDSPoint(self, units):
-                dsPoint = ds.Geometry.Point.ByCoordinates(self.x * toDSUnits(units), self.y * toDSUnits(units), self.z * toDSUnits(units))
+        def toDSPoint(self):
+                dsPoint = ds.Geometry.Point.ByCoordinates(self.x, self.y, self.z)
                 return dsPoint
-        def toRHPoint3d(self, units):
-                rhPoint = rc.Geometry.Point3d(self.x * toRHUnits(units), self.y * toRHUnits(units), self.z * toRHUnits(units))
+        def toRHPoint3d(self):
+                rhPoint = rc.Geometry.Point3d(self.x, self.y, self.z)
                 return rhPoint
 
 class MSPoint4d(object):
@@ -124,11 +115,11 @@ class MSPoint4d(object):
                 self.weight = weight
         def addData(self, data):
                 self.data = data
-        def toDSPoint(self, units):
-                dsPoint = ds.Geometry.Point.ByCoordinates(self.x * toDSUnits(units), self.y * toDSUnits(units), self.z * toDSUnits(units))
+        def toDSPoint(self):
+                dsPoint = ds.Geometry.Point.ByCoordinates(self.x, self.y, self.z)
                 return dsPoint
-        def toRHPoint4d(self, units):
-                rhPoint4d = rc.Geometry.Point4d(self.x * toRHUnits(units), self.y * toRHUnits(units), self.z * toRHUnits(units), self.weight)
+        def toRHPoint4d(self):
+                rhPoint4d = rc.Geometry.Point4d(self.x, self.y, self.z, self.weight)
                 return rhPoint4d
 
 class MSPlane(object):
@@ -138,14 +129,14 @@ class MSPlane(object):
                 self.vector = vector
         def addData(self, data):
                 self.data = data
-        def toDSPlane(self, units):
-                dsOrigin = self.origin.toDSPoint(units)
-                dsVector = self.vector.toDSVector(units)
+        def toDSPlane(self):
+                dsOrigin = self.origin.toDSPoint()
+                dsVector = self.vector.toDSVector()
                 dsPlane = ds.Geometry.Plane.ByOriginNormal(dsOrigin, dsVector)
                 return dsPlane
-        def toRHPlane(self, units):
-                rhOrigin = self.origin.toRHPoint3d(units)
-                rhVector = self.vector.toRHVector3d(units)
+        def toRHPlane(self):
+                rhOrigin = self.origin.toRHPoint3d()
+                rhVector = self.vector.toRHVector3d()
                 rhPlane = rc.Geometry.Plane(rhOrigin, rhVector)
                 return rhPlane
 
@@ -156,14 +147,14 @@ class MSLine(object):
                 self.end = end
         def addData(self, data):
                 self.data = data
-        def toDSLine(self, units):
-                dsStartPt = self.start.toDSPoint(units)
-                dsEndPt = self.end.toDSPoint(units)
+        def toDSLine(self):
+                dsStartPt = self.start.toDSPoint()
+                dsEndPt = self.end.toDSPoint()
                 dsLine = ds.Geometry.Line.ByStartPointEndPoint(dsStartPt, dsEndPt)
                 return dsLine
-        def toRHLineCurve(self, units):
-                rhStartPt = self.start.toRHPoint3d(units)
-                rhEndPt = self.end.toRHPoint3d(units)
+        def toRHLineCurve(self):
+                rhStartPt = self.start.toRHPoint3d()
+                rhEndPt = self.end.toRHPoint3d()
                 rhLine = rc.Geometry.LineCurve(rhStartPt, rhEndPt)
                 return rhLine
 
@@ -174,12 +165,12 @@ class MSCircle(object):
                 self.radius = radius
         def addData(self, data):
                 self.data = data
-        def toDSCircle(self, units):
-                dsPlane = self.plane.toDSPlane(units)
+        def toDSCircle(self):
+                dsPlane = self.plane.toDSPlane()
                 dsCircle = ds.Geometry.Circle.ByPlaneRadius(dsPlane, self.radius)
                 return dsCircle
-        def toRHCircle(self, units):
-                rhPlane = self.plane.toRHPlane(units)
+        def toRHCircle(self):
+                rhPlane = self.plane.toRHPlane()
                 rhCircle = rc.Geometry.Circle(rhPlane, self.radius)
                 return rhCircle
 
@@ -191,12 +182,12 @@ class MSEllipse(object):
                 self.yRadius = yRadius
         def addData(self, data):
                 self.data = data
-        def toDSEllipse(self, units):
-                dsPlane = self.plane.toDSPlane(units)
+        def toDSEllipse(self):
+                dsPlane = self.plane.toDSPlane()
                 dsEllipse = ds.Geometry.Ellipse.ByPlaneRadii(dsPlane, self.xRadius, self.yRadius)
                 return dsEllipse
-        def toRHEllipse(self, units):
-                rhPlane = self.plane.toRHPlane(units)
+        def toRHEllipse(self):
+                rhPlane = self.plane.toRHPlane()
                 rhEllipse = rc.Geometry.Ellipse(rhPlane, self.xRadius, self.yRadius)
                 return rhEllipse
 
@@ -208,15 +199,15 @@ class MSArc(object):
                 self.endPoint = endPoint
         def addData(self, data):
                 self.data = data
-        def toDSArc(self, units):
-                dsStartPt = self.startPoint.toDSPoint(units)
-                dsEndPt = self.endPoint.toDSPoint(units)
-                dsCenterPt = self.centerPoint.toDSPoint(units)
+        def toDSArc(self):
+                dsStartPt = self.startPoint.toDSPoint()
+                dsEndPt = self.endPoint.toDSPoint()
+                dsCenterPt = self.centerPoint.toDSPoint()
                 return ds.Geometry.Arc.ByCenterPointStartPointEndPoint(dsCenterPt, dsStartPt, dsEndPt)
-        def toRHArc(self, units):
-                rhStartPt = self.startPoint.toRHPoint3d(units)
-                rhEndPt = self.endPoint.toRHPoint3d(units)
-                rhMidPt = self.centerPoint.toRHPoint3d(units)
+        def toRHArc(self):
+                rhStartPt = self.startPoint.toRHPoint3d()
+                rhEndPt = self.endPoint.toRHPoint3d()
+                rhMidPt = self.centerPoint.toRHPoint3d()
                 return rc.Geometry.Arc(rhStartPt, rhMidPt, rhEndPt)
 
 class MSPolyLine(object):
@@ -225,16 +216,16 @@ class MSPolyLine(object):
                 self.segments = segments
         def addData(self, data):
                 self.data = data
-        def toDSPolyCurve(self, units):
+        def toDSPolyCurve(self):
                 dsLines = []
                 for line in self.segments:
-                        dsLines.append(line.toDSLine(units))
+                        dsLines.append(line.toDSLine())
                 dsPolyCurve = ds.Geometry.PolyCurve.ByJoinedCurves(dsLines)
                 return dsPolyCurve
-        def toRHPolyCurve(self, units):
+        def toRHPolyCurve(self):
                 rhPolyCurve = rc.Geometry.PolyCurve()
                 for line in self.segments:
-                        rhPolyCurve.Append(line.toRHLineCurve(units))
+                        rhPolyCurve.Append(line.toRHLineCurve())
                 return rhPolyCurve
 
 class MSNurbsCurve(object):
@@ -246,11 +237,11 @@ class MSNurbsCurve(object):
                 self.degree = degree
         def addData(self, data):
                 self.data = data
-        def toDSNurbsCurve(self, units):
+        def toDSNurbsCurve(self):
                 dsPoints = []
                 dsWeights = []
                 for index, pt in enumerate(self.points):
-                        dsPoints.append(pt.toDSPoint(units))
+                        dsPoints.append(pt.toDSPoint())
                         dsWeights.append(float(pt.weight))
                 dsPtArray = Array[ds.Geometry.Point](dsPoints)
                 dsWeightsArray = Array[float](dsWeights)
@@ -262,10 +253,10 @@ class MSNurbsCurve(object):
                 dsKnotsArray = Array[float](dsKnots)
                 dsNurbsCurve = ds.Geometry.NurbsCurve.ByControlPointsWeightsKnots(dsPtArray, dsWeightsArray, dsKnotsArray, self.degree)
                 return dsNurbsCurve
-        def toRHNurbsCurve(self, units):
+        def toRHNurbsCurve(self):
                 rhNurbsCurve = rc.Geometry.NurbsCurve(int(self.degree), int(len(self.points)))
                 for index, pt in enumerate(self.points):
-                        rhNurbsCurve.Points.SetPoint(index, pt.toRHPoint4d(units))
+                        rhNurbsCurve.Points.SetPoint(index, pt.toRHPoint4d())
                 rhKnots = []
                 for i in self.knots:
                      rhKnots.append(i)
@@ -281,82 +272,30 @@ class MSPolyCurve(object):
                 self.curves = curves
         def addData(self, data):
                 self.data = data
-        def toDSPolyCurve(self, units):
+        def toDSPolyCurve(self):
                 dsSubCurves = []
                 for crv in self.curves:
                         if type(crv) == MSLine:
-                                dsSubCurves.append(crv.toDSLine(units))
+                                dsSubCurves.append(crv.toDSLine())
                         elif type(crv) == MSArc:
-                                dsSubCurves.append(crv.toDSArc(units))
+                                dsSubCurves.append(crv.toDSArc())
                         elif type(crv) == MSPolyLine:
-                                dsSubCurves.append(crv.toDSPolyCurve(units))
+                                dsSubCurves.append(crv.toDSPolyCurve())
                         elif type(crv) == MSNurbsCurve:
-                                dsSubCurves.append(crv.toDSNurbsCurve(units).ToNurbsCurve())
+                                dsSubCurves.append(crv.toDSNurbsCurve().ToNurbsCurve())
                 dsPolyCurve = ds.Geometry.PolyCurve.ByJoinedCurves(dsSubCurves)
                 return dsPolyCurve
-        def toRHPolyCurve(self, units):
+        def toRHPolyCurve(self):
                 rhSubCurves = []
                 for crv in self.curves:
                         if type(crv) == MSLine:
-                                rhSubCurves.append(crv.toRHLineCurve(units))
+                                rhSubCurves.append(crv.toRHLineCurve())
                         elif type(crv) == MSArc:
-                                rhSubCurves.append(rc.Geometry.ArcCurve(crv.toRHArc(units)))
+                                rhSubCurves.append(rc.Geometry.ArcCurve(crv.toRHArc()))
                         elif type(crv) == MSNurbsCurve:
-                                rhSubCurves.append(crv.toRHNurbsCurve(units))
+                                rhSubCurves.append(crv.toRHNurbsCurve())
                 return rc.Geometry.Curve.JoinCurves(rhSubCurves)
-"""
-class MSMeshFace(object):
-        def __init__(self, a= None, b= None, c= None, d= None):
-                self.a = a
-                self.b = b
-                self.c = c
-                self.d = d
-                self.count = 3 if self.d is None else 4
-        def addData(self, data):
-                self.data = data
-        def toDSMeshFace(self):
-                if self.count == 3:
-                        dsMeshFace = ds.Geometry.IndexGroup.ByIndices(self.a, self.b, self.c)
-                else:
-                        dsMeshFace = ds.Geometry.IndexGroup.ByIndices(self.a, self.b, self.c, self.d)
-                return dsMeshFace
-        def toRHMeshFace(self):
-                if self.count == 3:
-                        rhMeshFace = rc.Geometry.MeshFace(self.a, self.b, self.c)
-                else:
-                        rhMeshFace = rc.Geometry.MeshFace(self.a, self.b, self.c, self.d)
-                return rhMeshFace
 
-class MSMesh(object):
-
-        def __init__( self, points= None, faces= None):
-                self.points = points
-                self.faces = faces
-        def addData(self, data):
-                self.data = data
-        def toDSMesh(self, units):
-                dsIndexGroups = []
-                for i in self.faces:
-                        if i.count == 3:
-                                dsIndexGroups.append(ds.Geometry.IndexGroup.ByIndices(i.a, i.b, i.c))
-                        else:
-                                dsIndexGroups.append(ds.Geometry.IndexGroup.ByIndices(i.a, i.b, i.c, i.d))
-                dsVertexPositions = []
-                for i in self.points:
-                        dsVertexPositions.append(i.toDSPoint(units))
-                dsMesh = ds.Geometry.Mesh.ByPointsFaceIndices(dsVertexPositions, dsIndexGroups)
-                return dsMesh
-        def toRHMesh(self, units):
-                rhMesh = rc.Geometry.Mesh()
-                for pt in self.points:
-                        rhMesh.Vertices.Add(pt.toRHPoint3d(units))
-                rhFaces = []
-                for face in self.faces:
-                        rhFaces.append(face.toRHMeshFace())
-                rhFaceArray = Array[rc.Geometry.MeshFace](rhFaces)
-                rhMesh.Faces.AddFaces(rhFaceArray)
-                return rhMesh
-"""
 class MSMesh(object):
 
         def __init__(self, points = None, faceTopology = None):
@@ -364,7 +303,7 @@ class MSMesh(object):
                 self.faceTopology = faceTopology
         def addData(self, data):
                 self.data = data
-        def toDSMesh(self, units):
+        def toDSMesh(self):
                 dsIndexGroups = []
                 for i in self.faceTopology:
                         if len(i) == 3:
@@ -373,7 +312,7 @@ class MSMesh(object):
                                 dsIndexGroups.append(ds.Geometry.IndexGroup.ByIndices(i[0], i[1], i[2], i[3]))
                 dsVertexPositions = []
                 for i in self.points:
-                        dsVertexPositions.append(i.toDSPoint(units))
+                        dsVertexPositions.append(i.toDSPoint())
                 dsMesh = ds.Geometry.Mesh.ByPointsFaceIndices(dsVertexPositions, dsIndexGroups)
                 return dsMesh
 
@@ -392,13 +331,13 @@ class MSNurbsSurface(object):
                 self.rational = rational
         def addData(self, data):
                 self.data = data
-        def toDSNurbsSurface(self, units):
+        def toDSNurbsSurface(self):
                 # DS Requires Control Points to be in .Net typed arrays
                 # convert Rhino Control Points to ArrayArray
                 # get control points and weights 
                 dsControlPoints, dsWeights = [], []
                 for pt in self.points:
-                        dsControlPoints.append(pt.toDSPoint(units))
+                        dsControlPoints.append(pt.toDSPoint())
                         dsWeights.append(pt.weight)
                 # get knotsU and knotsV
                 # convert list of knots to Array
@@ -428,7 +367,7 @@ class MSNurbsSurface(object):
                 # create DS NurbsSurface
                 dsNurbsSurface = ds.Geometry.NurbsSurface.ByControlPointsWeightsKnots(controlPointsArrayArray, weightsArrayArray, dsKnotsU, dsKnotsV, dsDegreeU, dsDegreeV)
                 return dsNurbsSurface
-        def toRHNurbsSurface(self, units):
+        def toRHNurbsSurface(self):
                 # Rhino uses something called Order instead of Degree. Order = Degree + 1
                 rhOrderU = self.degreeU + 1
                 rhOrderV = self.degreeV + 1
@@ -456,7 +395,7 @@ class MSNurbsSurface(object):
                 controlPts = [[] for i in range(len(list(self.points)))]
                 for index, _list in enumerate(self.points):
                         for pt in _list:
-                                controlPts[index].append(pt.toRHPoint3d(units))
+                                controlPts[index].append(pt.toRHPoint3d())
                 for i, _list in enumerate(controlPts):
                         for j, _item in enumerate(_list):
                               rhNurbsSurface.Points.SetControlPoint(i,j, rc.Geometry.ControlPoint(_item))
@@ -468,10 +407,10 @@ class MSMultiSpanNurbsCurve(object):
                 self.curves = curves
         def addData(self, data):
                 self.data = data
-        def toDSPolyCurve(self, units):
+        def toDSPolyCurve(self):
                 nurbsCurves = []
                 for i in self.curves:
-                        nurbsCurves.append(i.toDSNurbsCurve(units))
+                        nurbsCurves.append(i.toDSNurbsCurve())
                 dsPolyCurve = ds.Geometry.PolyCurve.ByJoinedCurves(nurbsCurves)
                 return dsPolyCurve
 
@@ -482,32 +421,32 @@ class MSBrep(object):
                 self.trims = trims
         def addData(self, data):
                 self.data = data
-        def toDSPolySurface(self, units):
+        def toDSPolySurface(self):
                 dsFaces = []
                 for face, loop in zip(self.faces, self.trims):
-                        dsFace = face.toDSNurbsSurface(units)
+                        dsFace = face.toDSNurbsSurface()
                         if len(loop) != 0:
                                 trimLoops = []
                                 for trim in loop:
                                         dsTrims = []
                                         for curve in trim:
                                                 if type(curve) == MSNurbsCurve:
-                                                        dsTrims.append(curve.toDSNurbsCurve(units))
+                                                        dsTrims.append(curve.toDSNurbsCurve())
                                                 elif type(curve) == MSMultiSpanNurbsCurve:
                                                         for i in curve.curves:
-                                                                dsTrims.append(i.toDSNurbsCurve(units))
+                                                                dsTrims.append(i.toDSNurbsCurve())
                                                 elif type(curve) == MSLine:
-                                                        dsTrims.append(curve.toDSLine(units))
+                                                        dsTrims.append(curve.toDSLine())
                                                 elif type(curve) == MSCircle:
-                                                        dsTrims.append(curve.toDSCircle(units))
+                                                        dsTrims.append(curve.toDSCircle())
                                                 elif type(curve) == MSArc:
-                                                        dsTrims.append(curve.toDSArc(units))
+                                                        dsTrims.append(curve.toDSArc())
                                                 elif type(curve) == MSEllipse:
-                                                        dsTrims.append(curve.toDSEllipse(units))
+                                                        dsTrims.append(curve.toDSEllipse())
                                                 elif type(curve) == MSPolyCurve:
-                                                        dsTrims.append(curve.toDSPolyCurve(units))
+                                                        dsTrims.append(curve.toDSPolyCurve())
                                                 elif type(curve) == MSPolyLine:
-                                                        dsTrims.append(curve.toDSPolyCurve(units))
+                                                        dsTrims.append(curve.toDSPolyCurve())
                                         curveArray = List[ds.Geometry.Curve](dsTrims)
                                         trimLoops.append(ds.Geometry.PolyCurve.ByJoinedCurves(curveArray))
                                 dsFaces.append(dsFace.TrimWithEdgeLoops(trimLoops))
