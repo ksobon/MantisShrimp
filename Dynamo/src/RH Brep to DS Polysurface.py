@@ -10,13 +10,13 @@ sys.path.append(pyt_path)
 
 import os
 appDataPath = os.getenv('APPDATA')
-msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
+msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
-	sys.path.Add(msPath)
+	sys.path.append(msPath)
 if rhPath not in sys.path:
-	sys.path.Add(rhPath)
+	sys.path.append(rhPath)
 	clr.AddReferenceToFileAndPath(rhDllPath)
 
 from Autodesk.DesignScript.Geometry import *
@@ -27,44 +27,26 @@ from System.Collections.Generic import *
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
 rhObjects = IN[0]
-_units = IN[1]
-
-#unit conversion function from Rhino to DS
-def toDSUnits(_units):
-	if _units == rc.UnitSystem.Millimeters:
-		return 0.001
-	elif _units == rc.UnitSystem.Centimeters:
-		return 0.01
-	elif _units == rc.UnitSystem.Decimeters:
-		return 0.1
-	elif _units == rc.UnitSystem.Meters:
-		return 1
-	elif _units == rc.UnitSystem.Inches:
-		return 0.0254
-	elif _units == rc.UnitSystem.Feet:
-		return 0.3048
-	elif _units == rc.UnitSystem.Yards:
-		return 0.9144
 
 #Vector3d conversion function
 def rhVector3dToVector(rhVector):
-	VectorX = rhVector.X * toDSUnits(_units)
-	VectorY = rhVector.Y * toDSUnits(_units)
-	VectorZ = rhVector.Z * toDSUnits(_units)
+	VectorX = rhVector.X
+	VectorY = rhVector.Y
+	VectorZ = rhVector.Z
 	return Vector.ByCoordinates(VectorX, VectorY, VectorZ)
 
 #3dPoint Conversion function
 def rhPoint3dToPoint(rhPoint):
-	rhPointX = rhPoint.X * toDSUnits(_units)
-	rhPointY = rhPoint.Y * toDSUnits(_units)
-	rhPointZ = rhPoint.Z * toDSUnits(_units)
+	rhPointX = rhPoint.X
+	rhPointY = rhPoint.Y
+	rhPointZ = rhPoint.Z
 	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 
 #point/control point conversion function
 def rhPointToPoint(rhPoint):
-	rhPointX = rhPoint.Location.X * toDSUnits(_units)
-	rhPointY = rhPoint.Location.Y * toDSUnits(_units)
-	rhPointZ = rhPoint.Location.Z * toDSUnits(_units)
+	rhPointX = rhPoint.Location.X
+	rhPointY = rhPoint.Location.Y
+	rhPointZ = rhPoint.Location.Z
 	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 
 #Plane conversion function
@@ -105,27 +87,21 @@ def rhMultiSpanNurbsCurveToCurve(rhCurve):
 		rhCurveSubdomain = rhCurve.SpanDomain(i)
 		rhSubCurve.append(rhCurve.ToNurbsCurve(rhCurveSubdomain))
 	for curve in rhSubCurve:
-		#get control points
 		ptArray, weights, knots = [], [], []
 		rhControlPoints = curve.Points
 		for rhPoint in rhControlPoints:
 			dsPoint = rhPointToPoint(rhPoint)
 			ptArray.append(dsPoint)
-			#get weights for each point
 			weights.append(rhPoint.Weight)
-		#convert Python list to IEnumerable[]
 		ptArray = List[Point](ptArray)
 		weights = Array[float](weights)
-		#get degree of the curve
 		degree = curve.Degree
-		#get knots of the curve
 		rhKnots = curve.Knots
 		for i in rhKnots:
 			knots.append(i)
 		knots.insert(0, knots[0])
 		knots.insert(len(knots), knots[(len(knots)-1)])
 		knots = Array[float](knots)
-		#create ds curve from points, weights and knots
 		dsNurbsCurve.append(NurbsCurve.ByControlPointsWeightsKnots(ptArray, weights, knots, degree))
 		curveArray = List[Curve](dsNurbsCurve)
 		polyCurve = PolyCurve.ByJoinedCurves(curveArray)
@@ -139,27 +115,21 @@ def rhMultiSpanNurbsCurveToCurve(rhCurve):
 
 #single span nurbs curve conversion function
 def rhSingleSpanNurbsCurveToCurve(rhCurve):		
-	#get control points
 	ptArray, weights, knots = [], [], []
 	rhControlPoints = rhCurve.Points
 	for rhPoint in rhControlPoints:
 		dsPoint = rhPointToPoint(rhPoint)
 		ptArray.append(dsPoint)
-		#get weights for each point
 		weights.append(rhPoint.Weight)
-	#convert Python list to IEnumerable[]
 	ptArray = List[Point](ptArray)
 	weights = Array[float](weights)
-	#get degree of the curve
 	degree = rhCurve.Degree
-	#get knots of the curve
 	rhKnots = rhCurve.Knots
 	for i in rhKnots:
 		knots.append(i)
 	knots.insert(0, knots[0])
 	knots.insert(len(knots), knots[(len(knots)-1)])
 	knots = Array[float](knots)
-	#create ds curve from points, weights and knots
 	dsNurbsCurve = NurbsCurve.ByControlPointsWeightsKnots(ptArray, weights, knots, degree)
 	ptArray.Clear()
 	Array.Clear(weights, 0, len(weights))
@@ -221,12 +191,10 @@ def rhNurbsSurfaceToSurface(rhNurbsSurface):
 	dsNurbsSurfaces = []
 	dsControlPoints = []
 	dsWeights = []
-	#get control points and weights
 	rhControlPoints = rhNurbsSurface.Points
 	for point in rhControlPoints:
 		dsControlPoints.append(rhPointToPoint(point))
 		dsWeights.append(point.Weight)
-	#get knotsU and knotsV
 	rhKnotsU = rhNurbsSurface.KnotsU
 	dsKnotsU = []
 	for i in rhKnotsU:
@@ -241,31 +209,25 @@ def rhNurbsSurfaceToSurface(rhNurbsSurface):
 	dsKnotsV.insert(0, dsKnotsV[0])
 	dsKnotsV.insert(len(dsKnotsV), dsKnotsV[len(dsKnotsV)-1])
 	dsKnotsV = Array[float](dsKnotsV)
-	#get uDegree and vDegree via order-1
 	dsDegreeU = (rhNurbsSurface.OrderU) - 1 
 	dsDegreeV = (rhNurbsSurface.OrderV) - 1
-	#compute number of UV Control points
 	uCount = rhNurbsSurface.SpanCount(0) + 3
 	vCount = rhNurbsSurface.SpanCount(1) + 3
-	#split control points into sublists of UV points
-	#convert list of lists to Array[Array[point]]
 	newControlPoints = [dsControlPoints[i:i+vCount] for i  in range(0, len(dsControlPoints), vCount)]
 	newWeights = [dsWeights[i:i+vCount] for i  in range(0, len(dsWeights), vCount)]
-
 	weightsArrayArray = Array[Array[float]](map(tuple, newWeights))
 	controlPointsArrayArray = Array[Array[Point]](map(tuple, newControlPoints))
-	#create ds nurbs surface
 	dsNurbsSurface = NurbsSurface.ByControlPointsWeightsKnots(controlPointsArrayArray, weightsArrayArray, dsKnotsU, dsKnotsV, dsDegreeU, dsDegreeV)
 	return dsNurbsSurface
 
 #join/group curves function
 def groupCurves(Line_List): 
-	ignore_distance = 0.1 # Assume points this close or closer to each other are touching 
+	ignore_distance = 0.1
 	Grouped_Lines = [] 
 	Queue = set() 
 	while Line_List: 
 		Shape = [] 
-		Queue.add(Line_List.pop()) # Move a line from the Line_List to our queue 
+		Queue.add(Line_List.pop())
 		while Queue: 
 			Current_Line = Queue.pop() 
 			Shape.append(Current_Line) 
