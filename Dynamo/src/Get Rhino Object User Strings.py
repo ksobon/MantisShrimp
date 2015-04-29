@@ -10,9 +10,9 @@ sys.path.append(pyt_path)
 
 import os
 appDataPath = os.getenv('APPDATA')
-msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
+msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
 	sys.path.Add(msPath)
 if rhPath not in sys.path:
@@ -28,19 +28,19 @@ rhObjects = IN[0]
 keys = IN[1]
 
 #extract all user strings from rhino object
-
-userStrings = []
-for i, key in zip(rhObjects, keys):
-	try:
-		item = i.Geometry
-	except:
-		pass
-	if item == None:
-		item = i
-	userSubStrings = []
-	for i in range(0, len(key),1):
-		userSubStrings.extend(item.GetUserStrings().GetValues(key[i]))
-	userStrings.append(userSubStrings)
+try:
+	item = item.Geometry
+except:
+	pass
+if not any(isinstance(item, list) for item in keys):
+	userStrings = []
+	for key in keys[index]:
+		userStrings[index].extend(item.GetUserStrings().GetValues(key))
+else:
+	userStrings = [[] for i in range(len(rhObjects))]
+	for index, item in enumerate(rhObjects):
+		for key in keys[index]:
+			userStrings[index].extend(item.GetUserStrings().GetValues(key))
 
 #Assign your output to the OUT variable
 OUT = userStrings
