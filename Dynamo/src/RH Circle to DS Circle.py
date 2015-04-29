@@ -52,7 +52,7 @@ def rhPlaneToPlane(rhPlane):
 #circle conversion function
 def rhCircleToCircle(rhCurve):
 	rhCircle = rhCurve.TryGetCircle()[1]
-	radius = rhCircle.Radius * toDSUnits(_units)
+	radius = rhCircle.Radius
 	plane = rhPlaneToPlane(rhCircle.Plane)
 	dsCircle = Circle.ByPlaneRadius(plane, radius)
 	return dsCircle
