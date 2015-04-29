@@ -10,9 +10,9 @@ sys.path.append(pyt_path)
 
 import os
 appDataPath = os.getenv('APPDATA')
-msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
+msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
 	sys.path.Add(msPath)
 if rhPath not in sys.path:
@@ -25,30 +25,12 @@ import Rhino as rc
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
 rhObjects = IN[0]
-_units = IN[1]
-
-#unit conversion function from Rhino to DS
-def toDSUnits(_units):
-	if _units == rc.UnitSystem.Millimeters:
-		return 0.001
-	elif _units == rc.UnitSystem.Centimeters:
-		return 0.01
-	elif _units == rc.UnitSystem.Decimeters:
-		return 0.1
-	elif _units == rc.UnitSystem.Meters:
-		return 1
-	elif _units == rc.UnitSystem.Inches:
-		return 0.0254
-	elif _units == rc.UnitSystem.Feet:
-		return 0.3048
-	elif _units == rc.UnitSystem.Yards:
-		return 0.9144
 
 #point/control point conversion function
 def rhPointToPoint(rhPoint):
-	rhPointX = rhPoint.Location.X * toDSUnits(_units)
-	rhPointY = rhPoint.Location.Y * toDSUnits(_units)
-	rhPointZ = rhPoint.Location.Z * toDSUnits(_units)
+	rhPointX = rhPoint.Location.X
+	rhPointY = rhPoint.Location.Y
+	rhPointZ = rhPoint.Location.Z
 	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
 
 #convert rhino/gh geometry to ds geometry
