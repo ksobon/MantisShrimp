@@ -10,13 +10,13 @@ sys.path.append(pyt_path)
 
 import os
 appDataPath = os.getenv('APPDATA')
-msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
+msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
-	sys.path.Add(msPath)
+	sys.path.append(msPath)
 if rhPath not in sys.path:
-	sys.path.Add(rhPath)
+	sys.path.append(rhPath)
 	clr.AddReferenceToFileAndPath(rhDllPath)
 
 from Autodesk.DesignScript.Geometry import *
@@ -49,33 +49,33 @@ serializer.readFromFile()
 
 # recursive function to process any input list and output 
 # matching structure list
-def ProcessList(_func, _list, _units):
-    return map( lambda x: ProcessList(_func, x, _units) if type(x)==list else _func(x, _units), _list )
+def ProcessList(_func, _list):
+    return map( lambda x: ProcessList(_func, x) if type(x)==list else _func(x), _list)
     
 # function to convert MS Objects to DS objects
-def toDSObject(item, units):
+def toDSObject(item):
 	if type(item) == MSPoint:
-		return item.toDSPoint(units)
+		return item.toDSPoint()
 	elif type(item) == MSLine:
-		return item.toDSLine(units)
+		return item.toDSLine()
 	elif type(item) == MSPolyLine:
-		return item.toDSPolyCurve(units)
+		return item.toDSPolyCurve()
 	elif type(item) == MSEllipse:
-		return item.toDSEllipse(units)
+		return item.toDSEllipse()
 	elif type(item) == MSCircle:
-		return item.toDSCircle(units)
+		return item.toDSCircle()
 	elif type(item) == MSArc:
-		return item.toDSArc(units)
+		return item.toDSArc()
 	elif type(item) == MSNurbsCurve:
-		return item.toDSNurbsCurve(units)
+		return item.toDSNurbsCurve()
 	elif type(item) == MSMultiSpanNurbsCurve:
-		return item.toDSPolyCurve(units)
+		return item.toDSPolyCurve()
 	elif type(item) == MSPolyCurve:
-		return item.toDSPolyCurve(units)
+		return item.toDSPolyCurve()
 	elif type(item) == MSMesh:
-		return item.toDSMesh(units)
+		return item.toDSMesh()
 	elif type(item) == MSNurbsSurface:
-		return item.toDSNurbsSurface(units)
+		return item.toDSNurbsSurface()
 	else:
 		message = "Geometry type not yet supported"
 		return message
@@ -86,9 +86,7 @@ if _import:
 	if type(serializedData) == MSData:
 		geometryOut = serializedData.data
 	else:
-		rhUnits = serializedData.pop(0).data
-		del serializedData[0]
-		geometryOut = ProcessList(toDSObject, serializedData, rhUnits)
+		geometryOut = ProcessList(toDSObject, serializedData)
 else:
 	message = "Import set to false"
 
