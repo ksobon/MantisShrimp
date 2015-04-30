@@ -297,26 +297,26 @@ class MSPolyCurve(object):
                 return rc.Geometry.Curve.JoinCurves(rhSubCurves)
 
 class MSMeshFace(object):		
--        def __init__(self, a= None, b= None, c= None, d= None):		
--                self.a = a		
--                self.b = b		
--                self.c = c		
--                self.d = d		
--                self.count = 3 if self.d is None else 4		
--        def addData(self, data):		
--                self.data = data		
--        def toDSMeshFace(self):		
--                if self.count == 3:		
--                        dsMeshFace = ds.Geometry.IndexGroup.ByIndices(self.a, self.b, self.c)		
--                else:		
--                        dsMeshFace = ds.Geometry.IndexGroup.ByIndices(self.a, self.b, self.c, self.d)		
--                return dsMeshFace		
--        def toRHMeshFace(self):		
--                if self.count == 3:		
--                        rhMeshFace = rc.Geometry.MeshFace(self.a, self.b, self.c)		
--                else:		
--                        rhMeshFace = rc.Geometry.MeshFace(self.a, self.b, self.c, self.d)		
--                return rhMeshFace
+        def __init__(self, a= None, b= None, c= None, d= None):		
+                self.a = a		
+                self.b = b		
+                self.c = c		
+                self.d = d		
+                self.count = 3 if self.d is None else 4		
+        def addData(self, data):		
+                self.data = data		
+        def toDSMeshFace(self):		
+                if self.count == 3:		
+                        dsMeshFace = ds.Geometry.IndexGroup.ByIndices(self.a, self.b, self.c)		
+                else:		
+                        dsMeshFace = ds.Geometry.IndexGroup.ByIndices(self.a, self.b, self.c, self.d)		
+                return dsMeshFace		
+        def toRHMeshFace(self):		
+                if self.count == 3:		
+                        rhMeshFace = rc.Geometry.MeshFace(self.a, self.b, self.c)		
+                else:		
+                        rhMeshFace = rc.Geometry.MeshFace(self.a, self.b, self.c, self.d)		
+                return rhMeshFace
 
 class MSMesh(object):
 
