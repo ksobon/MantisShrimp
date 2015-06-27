@@ -337,7 +337,20 @@ class MSMesh(object):
                         dsVertexPositions.append(i.toDSPoint())
                 dsMesh = ds.Geometry.Mesh.ByPointsFaceIndices(dsVertexPositions, dsIndexGroups)
                 return dsMesh
-
+        def toRHMesh(self):		
+-                rhMesh = rc.Geometry.Mesh()		
+-                for pt in self.points:		
+-                        rhMesh.Vertices.Add(pt.toRHPoint3d())		
+-                rhFaces = []
+-                for face in self.faceTopology:
+			if len(face)==3:
+				rhMeshFace = rc.Geometry.MeshFace(face[0], face[1], face[2])
+			else:
+				rhMeshFace = rc.Geometry.MeshFace(face[0], face[1], face[2], face[3])
+-                        rhFaces.append(rhMeshFace)		
+-                rhFaceArray = Array[rc.Geometry.MeshFace](rhFaces)		
+-                rhMesh.Faces.AddFaces(rhFaceArray)		
+-                return rhMesh
 
 class MSNurbsSurface(object):
 
