@@ -11,13 +11,16 @@ sys.path.append(pyt_path)
 import os
 appDataPath = os.getenv('APPDATA')
 msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
 	sys.path.append(msPath)
-if rhPath not in sys.path:
-	sys.path.append(rhPath)
+txtFilePath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra\rhPath.txt"
+if not os.path.isfile(txtFilePath):
+	message = "Provide valid RhinoCommon.dll path."
+else:
+	file = open(txtFilePath, 'r+')
+	rhDllPath = file.readline()
 	clr.AddReferenceToFileAndPath(rhDllPath)
+	file.close()
 
 from Autodesk.DesignScript.Geometry import *
 from System import Array
@@ -36,28 +39,21 @@ _export = IN[2]
 class SerializeObjects(object):
     
     def __init__(self, filePath, data = None):
-        
-        # create directory if it is not created
         folder, fileName = os.path.split(filePath)
         if not os.path.isdir(folder):
             os.mkdir(folder)
-        
         self.filePath = filePath
-        self.data = data
-        
+        self.data = data     
     def saveToFile(self):
     	with open(self.filePath, 'wb') as outf:
-			pickle.dump(self.data, outf)
-            
+			pickle.dump(self.data, outf)         
     def readFromFile(self):
         with open(self.filePath, 'rb') as inf:
             self.data = pickle.load(inf)
 
-# recursive function to process any input list and output 
-# matching structure list
 def process_list(_func, _list):
     return map( lambda x: process_list(_func, x) if type(x)==list else _func(x), _list )
-# function to convert DS Point to MS Point
+
 def toMSPoint(_point):
 	return MSPoint(_point.X, _point.Y, _point.Z)
 
@@ -93,10 +89,6 @@ def toMSNurbsCurve(item):
 		msPoints4d.append(MSPoint4d(pt.X, pt.Y, pt.Z, w))
 	return MSNurbsCurve(msPoints4d, item.Weights(), item.Knots(), item.Degree)
 
-# use these two functions to convert generic Curve
-# to Line or Arc since PolyCurve.Curves() method
-# returns only generic curves
-
 def tryGetArc(item):
 	startPoint = item.StartPoint
 	endPoint = item.EndPoint
@@ -116,7 +108,6 @@ def tryGetLine(item):
 	else:
 		return None
 
-# this is still work in progress
 def toMSPolyLine(item):
 	segments, msSegments = [], []
 	for crv in item.Curves():
@@ -127,29 +118,18 @@ def toMSPolyLine(item):
 		return MSPolyLine(msSegments)
 	else:
 		return None
-"""
-def toMSPolyCurve(item):
-	segments = []
-	for crv in item.Curves():
-		if tryGetLine(crv) != None:
-			segments.append(toMSLine(tryGetLine(crv)))
-		elif tryGetArc(crv) != None:
-			segments.append(toMSArc(tryGetArc(crv)))
-		else:
-			segments.append(toMSNurbsCurve(crv.ToNurbsCurve()))
-	return segments
-"""
+
 def toMSMesh(item):
 	msPoints = []
 	for pt in item.VertexPositions:
 		msPoints.append(MSPoint(pt.X, pt.Y, pt.Z))
-	msFaces = []
+	faceTopology = []
 	for i in item.FaceIndices:
 		if i.Count == 3:
-			msFaces.append(MSMeshFace(i.A, i.B, i.C))
+			faceTopology.append([i.A, i.B, i.C])
 		else:
-			msFaces.append(MSMeshFace(i.A, i.B, i.C, i.D))
-	return MSMesh(msPoints, msFaces)
+			faceTopology.append([i.A, i.B, i.C, i.D])
+	return MSMesh(msPoints, faceTopology)
 
 def toMSNurbsSurface(item):
 	controlPoints = list(item.ControlPoints())
@@ -164,8 +144,6 @@ def toMSNurbsSurface(item):
 		weights = item.Weights()
 	return MSNurbsSurface(msControlPoints, weights, item.UKnots(), item.VKnots(), item.DegreeU, item.DegreeV, item.NumControlPointsU, item.NumControlPointsV, rational)
 
-# funtions to convert DS Geometry to MS Geometry
-# Points
 def toMSObject(item):
 	if type(item) == Point:
 		return MSPoint(item.X, item.Y, item.Z)
@@ -193,7 +171,6 @@ def toMSObject(item):
 
 if _export:
 	outGeometry = process_list(toMSObject, dsObjects)
-	
 	try:
 		serializer = SerializeObjects(_filePath, outGeometry)
 		serializer.saveToFile()
