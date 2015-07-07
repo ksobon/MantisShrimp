@@ -181,6 +181,8 @@ def tryExplode(item):
         return [item]
 
 def rhBrepToMsBrep(item):
+    if item.Faces.Count == 1:
+        return rhNurbsSurfaceToMSNurbsSurface(item.Faces.Item[0].ToNurbsSurface())
     msFaces = []
     faces = item.Faces
     joinedCurves = [[] for i in range(faces.Count)]
