@@ -89,6 +89,8 @@ try:
 				rhSurface = brepFaces.Item[i].UnderlyingSurface()
 				if rhSurface.ToString() == "Rhino.Geometry.NurbsSurface":
 					dsNurbsSurfaces.append(rhNurbsSurfaceToSurface(rhSurface))
+				elif rhSurface.ToString() == "Rhino.Geometry.RevSurface":
+					dsNurbsSurfaces.append(rhNurbsSurfaceToSurface(rhSurface.ToNurbsSurface()))
 except:
 	# if error accurs anywhere in the process catch it
 	import traceback
