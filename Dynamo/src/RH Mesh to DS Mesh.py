@@ -10,14 +10,11 @@ sys.path.append(pyt_path)
 
 import os
 appDataPath = os.getenv('APPDATA')
-msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
+msPath = appDataPath + r'\Dynamo\0.8\packages\Mantis Shrimp\extra'
 if msPath not in sys.path:
 	sys.path.append(msPath)
-if rhPath not in sys.path:
-	sys.path.append(rhPath)
-	clr.AddReferenceToFileAndPath(rhDllPath)
+rhDllPath = appDataPath + r'\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll'
+clr.AddReferenceToFileAndPath(rhDllPath)
 
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
@@ -55,20 +52,29 @@ def rhMeshToMesh(rhMesh):
 			d = i[3]
 			indexGroups.append(IndexGroup.ByIndices(a,b,c,d))
 	dsMesh = Mesh.ByPointsFaceIndices(vertexPositions, indexGroups)
-	del vertexPositions[:]
-	del indices[:]
-	del indexGroups[:]
+	# According to Dynamo dev team it's required to dispose of unused geometry.
+	for i in vertexPositions:
+		i.Dispose()
 	return dsMesh
 
-#convert rhino/gh geometry to ds geometry
-dsMeshes = []
-for i in rhObjects:
-	try:
-		i = i.Geometry
-	except:
-		pass
-	if i.ToString() == "Rhino.Geometry.Mesh":
-		dsMeshes.append(rhMeshToMesh(i))
+try:
+	errorReport = None
+	#convert rhino/gh geometry to ds geometry
+	dsMeshes = []
+	for i in rhObjects:
+		try:
+			i = i.Geometry
+		except:
+			pass
+		if i.ToString() == "Rhino.Geometry.Mesh":
+			dsMeshes.append(rhMeshToMesh(i))
+except:
+	# if error accurs anywhere in the process catch it
+	import traceback
+	errorReport = traceback.format_exc()
 
 #Assign your output to the OUT variable
-OUT = dsMeshes
+if errorReport == None:
+	OUT = dsMeshes
+else:
+	OUT = errorReport
