@@ -60,22 +60,14 @@ def rhMeshToMesh(rhMesh):
 try:
 	errorReport = None
 	#convert rhino/gh geometry to ds geometry
-	if isinstance(rhObjects, list):
-		dsMeshes = []
-		for i in rhObjects:
-			try:
-				i = i.Geometry
-			except:
-				pass
-			if i.ToString() == "Rhino.Geometry.Mesh":
-				dsMeshes.append(rhMeshToMesh(i))
-	else:
+	dsMeshes = []
+	for i in rhObjects:
 		try:
-			rhObjects = rhObjects.Geometry
+			i = i.Geometry
 		except:
 			pass
-		if rhObjects.ToString() == "Rhino.Geometry.Mesh":
-			dsMeshes = rhMeshToMesh(rhObjects)
+		if i.ToString() == "Rhino.Geometry.Mesh":
+			dsMeshes.append(rhMeshToMesh(i))
 except:
 	# if error accurs anywhere in the process catch it
 	import traceback
