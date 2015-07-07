@@ -18,11 +18,11 @@ ghenv.Component.Category = "Mantis Shrimp"
 import sys
 import os
 appDataPath = os.getenv('APPDATA')
-msPath = appDataPath + r"\Dynamo\0.7\packages\Mantis Shrimp\extra"
+msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
 if msPath not in sys.path:
     sys.path.append(msPath)
+    
 from mantisshrimp import *
-
 import Rhino as rc
 import cPickle as pickle
 import Grasshopper.Kernel as gh
@@ -152,14 +152,14 @@ def rhPolyCurveToMSPolyCurve(item):
     return msPolyCurve
 
 def rhMeshToMSMesh(item):
-    faceTopology = []
-    msPoints = []
+    faceTopology, points = [], []
+    faces = item.Faces
+    tvList = item.TopologyVertices
     for i in range(0, item.Faces.Count, 1):
-        faceIndicies = item.TopologyVertices.IndicesFromFace(i)
-        faceTopology.append(list(faceIndicies))
-    for i in range(0, item.Vertices.Count, 1):
-        msPoints.append(MSPoint(item.Vertices.Item[i].X, item.Vertices.Item[i].Y, item.Vertices.Item[i].Z))
-    return MSMesh(msPoints, faceTopology)
+        faceTopology.append(faces.GetTopologicalVertices(i))
+    for i in range(0, tvList.Count, 1):
+        points.append(MSPoint(tvList.Item[i].X, tvList.Item[i].Y, tvList.Item[i].Z))
+    return MSMesh(points, faceTopology)
 
 def rhNurbsSurfaceToMSNurbsSurface(item):
     msControlPoints = []
@@ -236,11 +236,11 @@ def toMSObject(item):
         return rhPolyCurveToMSPolyCurve(item)
     elif type(item) == rc.Geometry.Mesh:
         return rhMeshToMSMesh(item)
+    if type(item) == rc.Geometry.Brep:
+        return rhBrepToMsBrep(item)
     elif type(item) == rc.Geometry.Brep and item.IsSurface == True:
         item = item.Faces[0].ToNurbsSurface()
         return rhNurbsSurfaceToMSNurbsSurface(item)
-    elif type(item) == rc.Geometry.Brep:
-        return rhBrepToMsBrep(item)
     else:
         return MSData(item)
 
@@ -258,9 +258,7 @@ if _export:
         geometryList = TreeToList(newTree)
     else:
         geometryList = TreeToList(_geometry)
-
     geometryOut = process_list(toMSObject, geometryList)
-    geometryOut.insert(0, MSData(sc.doc.ModelUnitSystem.ToString()))
     try:
         serializer = SerializeObjects(_filePath, geometryOut)
         serializer.saveToFile()
