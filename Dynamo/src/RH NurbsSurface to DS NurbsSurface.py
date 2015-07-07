@@ -11,13 +11,16 @@ sys.path.append(pyt_path)
 import os
 appDataPath = os.getenv('APPDATA')
 msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
-	sys.path.Add(msPath)
-if rhPath not in sys.path:
-	sys.path.Add(rhPath)
+	sys.path.append(msPath)
+txtFilePath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra\rhPath.txt"
+if not os.path.isfile(txtFilePath):
+	message = "Provide valid RhinoCommon.dll path."
+else:
+	file = open(txtFilePath, 'r+')
+	rhDllPath = file.readline()
 	clr.AddReferenceToFileAndPath(rhDllPath)
+	file.close()
 
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
@@ -67,22 +70,32 @@ def rhNurbsSurfaceToSurface(rhNurbsSurface):
 	weightsArrayArray = Array[Array[float]](map(tuple, newWeights))
 	controlPointsArrayArray = Array[Array[Point]](map(tuple, newControlPoints))
 	dsNurbsSurface = NurbsSurface.ByControlPointsWeightsKnots(controlPointsArrayArray, weightsArrayArray, dsKnotsU, dsKnotsV, dsDegreeU, dsDegreeV)
+	for i in dsControlPoints:
+		i.Dispose()
 	return dsNurbsSurface
 
-#convert nurbs surfaces to ds nurbs surfaces
-dsNurbsSurfaces = []
-for i in rhObjects:
-	try:
-		i = i.Geometry
-	except:
-		pass	
-	if i.ToString() == "Rhino.Geometry.Brep":
-		brepFaces = i.Faces
-		n = brepFaces.Count
-		for i in range(0, n, 1):
-			rhSurface = brepFaces.Item[i].UnderlyingSurface()
-			if rhSurface.ToString() == "Rhino.Geometry.NurbsSurface":
-				dsNurbsSurfaces.append(rhNurbsSurfaceToSurface(rhSurface))
-			
+try:
+	errorReport = None
+	#convert nurbs surfaces to ds nurbs surfaces
+	dsNurbsSurfaces = []
+	for i in rhObjects:
+		try:
+			i = i.Geometry
+		except:
+			pass	
+		if i.ToString() == "Rhino.Geometry.Brep":
+			brepFaces = i.Faces
+			for i in range(0, brepFaces.Count, 1):
+				rhSurface = brepFaces.Item[i].UnderlyingSurface()
+				if rhSurface.ToString() == "Rhino.Geometry.NurbsSurface":
+					dsNurbsSurfaces.append(rhNurbsSurfaceToSurface(rhSurface))
+except:
+	# if error accurs anywhere in the process catch it
+	import traceback
+	errorReport = traceback.format_exc()
+
 #Assign your output to the OUT variable
-OUT = dsNurbsSurfaces
+if errorReport == None:
+	OUT = dsNurbsSurfaces
+else:
+	OUT = errorReport
