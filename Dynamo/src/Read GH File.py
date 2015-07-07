@@ -11,13 +11,16 @@ sys.path.append(pyt_path)
 import os
 appDataPath = os.getenv('APPDATA')
 msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
 	sys.path.append(msPath)
-if rhPath not in sys.path:
-	sys.path.append(rhPath)
+txtFilePath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra\rhPath.txt"
+if not os.path.isfile(txtFilePath):
+	message = "Provide valid RhinoCommon.dll path."
+else:
+	file = open(txtFilePath, 'r+')
+	rhDllPath = file.readline()
 	clr.AddReferenceToFileAndPath(rhDllPath)
+	file.close()
 
 from Autodesk.DesignScript.Geometry import *
 from System import Array
@@ -47,12 +50,9 @@ class SerializeObjects(object):
 serializer = SerializeObjects(filePath)
 serializer.readFromFile()
 
-# recursive function to process any input list and output 
-# matching structure list
 def ProcessList(_func, _list):
     return map( lambda x: ProcessList(_func, x) if type(x)==list else _func(x), _list)
     
-# function to convert MS Objects to DS objects
 def toDSObject(item):
 	if type(item) == MSPoint:
 		return item.toDSPoint()
@@ -76,6 +76,8 @@ def toDSObject(item):
 		return item.toDSMesh()
 	elif type(item) == MSNurbsSurface:
 		return item.toDSNurbsSurface()
+	elif type(item) == MSBrep:
+		return item.toDSPolySurface()
 	else:
 		message = "Geometry type not yet supported"
 		return message
