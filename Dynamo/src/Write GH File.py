@@ -89,6 +89,15 @@ def toMSNurbsCurve(item):
 		msPoints4d.append(MSPoint4d(pt.X, pt.Y, pt.Z, w))
 	return MSNurbsCurve(msPoints4d, item.Weights(), item.Knots(), item.Degree)
 
+def toMSNurbsCurve2(item):
+	msPoints4d = []
+	for pt in item.ControlPoints():
+		msPoints4d.append(MSPoint4d(pt.X, pt.Y, pt.Z, 1))
+	weights = []
+	for i in range(0, len(item.ControlPoints()),1):
+		weights.append(1)
+	return MSNurbsCurve(msPoints4d, weights, item.Knots(), item.Degree)
+
 def tryGetArc(item):
 	startPoint = item.StartPoint
 	endPoint = item.EndPoint
@@ -119,6 +128,17 @@ def toMSPolyLine(item):
 	else:
 		return None
 
+def toMSPolyCurve(item):
+	segments = []
+	for crv in item.Curves():
+		if tryGetLine(crv) != None:
+			segments.append(toMSLine(tryGetLine(crv)))
+		elif tryGetArc(crv) != None:
+			segments.append(toMSArc(tryGetArc(crv)))
+		else:
+			segments.append(toMSNurbsCurve2(crv.ToNurbsCurve()))
+	return MSPolyCurve(segments)
+
 def toMSMesh(item):
 	msPoints = []
 	for pt in item.VertexPositions:
@@ -144,16 +164,23 @@ def toMSNurbsSurface(item):
 		weights = item.Weights()
 	return MSNurbsSurface(msControlPoints, weights, item.UKnots(), item.VKnots(), item.DegreeU, item.DegreeV, item.NumControlPointsU, item.NumControlPointsV, rational)
 
+def toMSBrep(item):
+	faces = []
+	subSurf = item.Surfaces()
+	for i in subSurf:
+		faces.append(toMSNurbsSurface(i.ToNurbsSurface()))
+	return MSBrep(faces, None)
+
 def toMSObject(item):
 	if type(item) == Point:
 		return MSPoint(item.X, item.Y, item.Z)
 	elif type(item) == Line:
 		return toMSLine(item)
 	elif type(item) == PolyCurve:
-		if toMSPolyLine(item) == None:
-			print("None")
-		else:
+		if toMSPolyLine(item) != None:
 			return toMSPolyLine(item)
+		else:
+			return toMSPolyCurve(item)
 	elif type(item) == Circle:
 		return toMSCircle(item)
 	elif type(item) == Ellipse:
@@ -166,6 +193,8 @@ def toMSObject(item):
 		return toMSMesh(item)
 	elif type(item) == NurbsSurface:
 		return toMSNurbsSurface(item)
+	elif type(item) == PolySurface:
+		return toMSBrep(item)
 	else:
 		return MSData(item)
 
