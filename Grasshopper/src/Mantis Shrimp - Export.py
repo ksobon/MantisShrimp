@@ -273,6 +273,3 @@ if _export:
         ghenv.Component.AddRuntimeMessage(warnType, msg)
 else:
     msg = "Export set to false."
-
-for i in geometryOut:
-    print(type(i))
