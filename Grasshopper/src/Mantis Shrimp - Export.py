@@ -213,7 +213,7 @@ def toMSObject(item):
         return rhLineCurveToMSLine(item)
     elif type(item) == rc.Geometry.PolyCurve and item.IsPolyline() == True:
         return rhPolyLineToMSPolyLine(item)
-    elif type(item) == rc.Geometry.Polyline:
+    elif type(item) == rc.Geometry.Polyline or type(item) == rc.Geometry.PolylineCurve:
         return rhPolyLineToMSPolyLine(item)
     elif type(item) == rc.Geometry.NurbsCurve and item.IsClosed == True:
         if item.IsEllipse() == True:
