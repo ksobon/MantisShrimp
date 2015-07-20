@@ -213,7 +213,7 @@ def toMSObject(item):
         return rhLineCurveToMSLine(item)
     elif type(item) == rc.Geometry.PolyCurve and item.IsPolyline() == True:
         return rhPolyLineToMSPolyLine(item)
-    elif type(item) == rc.Geometry.Polyline or type(item) == rc.Geometry.PolyCurve:
+    elif type(item) == rc.Geometry.Polyline:
         return rhPolyLineToMSPolyLine(item)
     elif type(item) == rc.Geometry.NurbsCurve and item.IsClosed == True:
         if item.IsEllipse() == True:
@@ -230,7 +230,7 @@ def toMSObject(item):
     elif type(item) == rc.Geometry.ArcCurve and item.IsArc() == True:
         item = item.TryGetArc()[1]
         return rhArcCurveToMSArc(item)
-    elif type(item) == rc.Geometry.NurbsCurve and item.SpanCount == 1:
+    elif type(item) == rc.Geometry.NurbsCurve:
         return rhNurbsCurveToMSNurbsCurve(item)
     elif type(item) == rc.Geometry.NurbsCurve and item.SpanCount > 1:
         return rhMultiSpanNurbsCurveToMSNurbsCurve(item)
@@ -273,3 +273,6 @@ if _export:
         ghenv.Component.AddRuntimeMessage(warnType, msg)
 else:
     msg = "Export set to false."
+
+for i in geometryOut:
+    print(type(i))
