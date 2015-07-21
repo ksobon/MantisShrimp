@@ -34,9 +34,10 @@ def rhPoint3dToPoint(rhPoint):
 def rhLineToLine(rhCurve):
 	dsStartPoint = rhPoint3dToPoint(rhCurve.PointAtStart)
 	dsEndPoint = rhPoint3dToPoint(rhCurve.PointAtEnd)
+	dsLine = Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
 	dsStartPoint.Dispose()
 	dsEndPoint.Dispose()
-	return Line.ByStartPointEndPoint(dsStartPoint, dsEndPoint)
+	return dsLine
 
 #convert rhino/gh geometry to ds geometry
 try:
