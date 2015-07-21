@@ -11,16 +11,13 @@ sys.path.append(pyt_path)
 import os
 appDataPath = os.getenv('APPDATA')
 msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
+rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
+rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
-	sys.path.append(msPath)
-txtFilePath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra\rhPath.txt"
-if not os.path.isfile(txtFilePath):
-	message = "Provide valid RhinoCommon.dll path."
-else:
-	file = open(txtFilePath, 'r+')
-	rhDllPath = file.readline()
+	sys.path.Add(msPath)
+if rhPath not in sys.path:
+	sys.path.Add(rhPath)
 	clr.AddReferenceToFileAndPath(rhDllPath)
-	file.close()
 
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
