@@ -10,14 +10,11 @@ sys.path.append(pyt_path)
 
 import os
 appDataPath = os.getenv('APPDATA')
-msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
+msPath = appDataPath + r'\Dynamo\0.8\packages\Mantis Shrimp\extra'
 if msPath not in sys.path:
-	sys.path.Add(msPath)
-if rhPath not in sys.path:
-	sys.path.Add(rhPath)
-	clr.AddReferenceToFileAndPath(rhDllPath)
+	sys.path.append(msPath)
+rhDllPath = appDataPath + r'\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll'
+clr.AddReferenceToFileAndPath(rhDllPath)
 
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
@@ -47,6 +44,8 @@ def rhPlaneToPlane(rhPlane):
 	normal = rhVector3dToVector(rhPlane.Normal)
 	origin = rhPoint3dToPoint(rhPlane.Origin)
 	dsPlane = Plane.ByOriginNormal(origin, normal)
+	normal.Dispose()
+	origin.Dispose()
 	return dsPlane
 
 #circle conversion function
@@ -55,17 +54,27 @@ def rhCircleToCircle(rhCurve):
 	radius = rhCircle.Radius
 	plane = rhPlaneToPlane(rhCircle.Plane)
 	dsCircle = Circle.ByPlaneRadius(plane, radius)
+	plane.Dispose()
 	return dsCircle
 
 #convert rhino/gh geometry to ds geometry
-dsCircles = []
-for i in rhObjects:
-	try:
-		i = i.Geometry
-	except:
-		pass
-	if i.ToString() == "Rhino.Geometry.ArcCurve" and i.IsCircle():
-		dsCircles.append(rhCircleToCircle(i))
+try:
+	errorReport = None
+	dsCircles = []
+	for i in rhObjects:
+		try:
+			i = i.Geometry
+		except:
+			pass
+		if i.ToString() == "Rhino.Geometry.ArcCurve" and i.IsCircle():
+			dsCircles.append(rhCircleToCircle(i))
+except:
+	# if error accurs anywhere in the process catch it
+	import traceback
+	errorReport = traceback.format_exc()
 
 #Assign your output to the OUT variable
-OUT = dsCircles
+if errorReport == None:
+	OUT = dsCircles
+else:
+	OUT = errorReport
