@@ -122,10 +122,14 @@ def rhPointToMSPoint(item):
         return MSPoint(item.X, item.Y, item.Z)
 
 def rhEllipseToMSEllipse(item):
-    msVector = MSVector(item.Plane.Normal.X,item.Plane.Normal.Y, item.Plane.Normal.Z) 
+    #msVector = MSVector(item.Plane.Normal.X,item.Plane.Normal.Y, item.Plane.Normal.Z) 
     msOrigin = MSPoint(item.Plane.Origin.X, item.Plane.Origin.Y, item.Plane.Origin.Z)
-    msPlane = MSPlane(msOrigin, msVector)
-    return MSEllipse(msPlane, item.Radius1, item.Radius2)
+    ptX = rc.Geometry.Point3d.Multiply(item.Radius1, item.Plane.Origin)
+    ptY = rc.Geometry.Point3d.Multiply(item.Radius2, item.Plane.Origin)
+    msPointX = MSPoint(ptX.X, ptX.Y, ptX.Z)
+    msPointY = MSPoint(ptY.X, ptY.Y, ptY.Z)
+    #msPlane = MSPlane(msOrigin, msVector)
+    return MSEllipse(msOrigin, msPointX, msPointY, None, None, None)
 
 def rhCircleToMSCircle(item):
     msVector = MSVector(item.Normal.X,item.Normal.Y, item.Normal.Z)
@@ -213,15 +217,18 @@ def toMSObject(item):
         return rhLineCurveToMSLine(item)
     elif type(item) == rc.Geometry.PolyCurve and item.IsPolyline() == True:
         return rhPolyLineToMSPolyLine(item)
-    elif type(item) == rc.Geometry.Polyline or type(item) == rc.Geometry.PolylineCurve:
+    elif type(item) == rc.Geometry.Polyline:
         return rhPolyLineToMSPolyLine(item)
     elif type(item) == rc.Geometry.NurbsCurve and item.IsClosed == True:
         if item.IsEllipse() == True:
             item = item.TryGetEllipse()[1]
             return rhEllipseToMSEllipse(item)
-        elif item.IsCircle() == True:
+        elif item.IsCircle() == True or item.IsPeriodic:
             item = item.TryGetCircle()[1]
             return rhCircleToMSCircle(item)
+        elif not item.IsPeriodic and item.IsRational:
+            item = item.TryGetEllipse()[1]
+            return rhEllipseToMSEllipse(item)
         else:
             pass
     if type(item) == rc.Geometry.ArcCurve and item.IsCircle() == True:
@@ -230,7 +237,7 @@ def toMSObject(item):
     elif type(item) == rc.Geometry.ArcCurve and item.IsArc() == True:
         item = item.TryGetArc()[1]
         return rhArcCurveToMSArc(item)
-    elif type(item) == rc.Geometry.NurbsCurve:
+    elif type(item) == rc.Geometry.NurbsCurve and item.SpanCount == 1:
         return rhNurbsCurveToMSNurbsCurve(item)
     elif type(item) == rc.Geometry.NurbsCurve and item.SpanCount > 1:
         return rhMultiSpanNurbsCurveToMSNurbsCurve(item)
@@ -273,3 +280,6 @@ if _export:
         ghenv.Component.AddRuntimeMessage(warnType, msg)
 else:
     msg = "Export set to false."
+
+for i in geometryOut:
+    print(i.plane)
