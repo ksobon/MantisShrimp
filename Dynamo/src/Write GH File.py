@@ -72,10 +72,10 @@ def toMSArc(item):
 	return MSArc(msStartPt, msMidPoint, msEndPt)
 
 def toMSEllipse(item):
-	msOrigin = toMSPoint(item.CenterPoint)
-	msVector = MSVector(item.Normal.X, item.Normal.Y, item.Normal.Z)
-	msPlane = MSPlane(msOrigin, msVector)
-	return MSEllipse(msPlane, item.MinorAxis.Length, item.MajorAxis.Length)
+	origin = toMSPoint(item.CenterPoint)
+	ptX = toMSPoint(Point.Add(item.CenterPoint, item.MinorAxis))
+	ptY = toMSPoint(Point.Add(item.CenterPoint, item.MajorAxis))
+	return MSEllipse(origin, ptX, ptY)
 
 def toMSCircle(item):
 	msOrigin = toMSPoint(item.CenterPoint)
