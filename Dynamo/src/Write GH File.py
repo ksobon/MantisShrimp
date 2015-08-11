@@ -196,7 +196,10 @@ def toMSObject(item):
 		return MSData(item)
 
 if _export:
-	outGeometry = process_list(toMSObject, dsObjects)
+	if isinstance(dsObjects, list):
+		outGeometry = process_list(toMSObject, dsObjects)
+	else:
+		outGeometry = process_list(toMSObject, [dsObjects])
 	try:
 		serializer = SerializeObjects(_filePath, outGeometry)
 		serializer.saveToFile()
