@@ -78,6 +78,8 @@ def toDSObject(item):
 		return item.toDSNurbsSurface()
 	elif type(item) == MSBrep:
 		return item.toDSPolySurface()
+	elif type(item) == MSData:
+		return item.data
 	else:
 		message = "Geometry type not yet supported"
 		return message
