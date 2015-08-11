@@ -75,7 +75,7 @@ def toMSEllipse(item):
 	origin = toMSPoint(item.CenterPoint)
 	ptX = toMSPoint(Point.Add(item.CenterPoint, item.MinorAxis))
 	ptY = toMSPoint(Point.Add(item.CenterPoint, item.MajorAxis))
-	return MSEllipse(origin, ptX, ptY)
+	return MSEllipse(origin, ptX, ptY, None, None, None)
 
 def toMSCircle(item):
 	msOrigin = toMSPoint(item.CenterPoint)
@@ -152,16 +152,13 @@ def toMSMesh(item):
 	return MSMesh(msPoints, faceTopology)
 
 def toMSNurbsSurface(item):
+	rational = item.IsRational
+	weights = item.Weights()
 	controlPoints = list(item.ControlPoints())
 	msControlPoints = [[] for i in range(len(controlPoints))]
-	for index, _list in enumerate(controlPoints):
-		for pt in _list:
-			msControlPoints[index].append(MSPoint(pt.X, pt.Y, pt.Z))
-	rational = item.IsRational
-	if rational:
-		weights = None
-	else:
-		weights = item.Weights()
+	for index, (ptList, wtList) in enumerate(zip(controlPoints, weights)):
+		for pt, wt in zip(ptList, wtList):
+			msControlPoints[index].append(MSPoint4d(pt.X, pt.Y, pt.Z, wt))
 	return MSNurbsSurface(msControlPoints, weights, item.UKnots(), item.VKnots(), item.DegreeU, item.DegreeV, item.NumControlPointsU, item.NumControlPointsV, rational)
 
 def toMSBrep(item):
