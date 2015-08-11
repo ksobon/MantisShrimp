@@ -14,15 +14,19 @@ pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
 
 import os
+import os.path
 appDataPath = os.getenv('APPDATA')
 msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
-	sys.path.Add(msPath)
-if rhPath not in sys.path:
-	sys.path.Add(rhPath)
+        sys.path.Add(msPath)
+txtFilePath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra\rhPath.txt"
+if not os.path.isfile(txtFilePath):
+	message = "Provide valid RhinoCommon.dll path."
+else:
+	file = open(txtFilePath, 'r+')
+	rhDllPath = file.readline()
 	clr.AddReferenceToFileAndPath(rhDllPath)
+	file.close()
 
 from System import *
 from System.Collections.Generic import *
@@ -33,39 +37,6 @@ import pickle
 """ Misc Functions """
 def process_list(_func, _list):
     return map( lambda x: process_list(_func, x) if type(x)==list else _func(x), _list )
-
-#unit conversion function from Rhino to DS
-def toDSUnits(_units):
-	if _units == "Millimeters":
-		return 0.001
-	elif _units == "Centimeters":
-		return 0.01
-	elif _units == "Decimeters":
-		return 0.1
-	elif _units == "Meters":
-		return 1
-	elif _units == "Inches":
-		return 0.0254
-	elif _units == "Feet":
-		return 0.3048
-	elif _units == "Yards":
-		return 0.9144
-
-def toRHUnits(_units):
-        if _units == "Millimeters":
-                return 1000
-        elif _units == "Centimeters":
-                return 100
-        elif _units == "Decimeters":
-                return 10
-        elif _units == "Meters":
-                return 1
-        elif _units == "Inches":
-                return 39.3701
-        elif _units == "Feet":
-                return 3.28084
-        elif _units == "Yards":
-                return 1.09361
 
 """ Data Class """
 class MSData(object):
@@ -176,20 +147,27 @@ class MSCircle(object):
 
 class MSEllipse(object):
 
-        def __init__(self, plane= None, xRadius= None, yRadius= None):
+        def __init__(self, origin=None, ptX=None, ptY=None, plane=None, xRadius=None, yRadius=None):
+                self.origin = origin
+                self.ptX = ptX
+                self.ptY = ptY
                 self.plane = plane
                 self.xRadius = xRadius
                 self.yRadius = yRadius
         def addData(self, data):
                 self.data = data
         def toDSEllipse(self):
-                dsPlane = self.plane.toDSPlane()
-                dsEllipse = ds.Geometry.Ellipse.ByPlaneRadii(dsPlane, self.xRadius, self.yRadius)
-                return dsEllipse
+                origin = self.origin.toDSPoint()
+                ptX = self.ptX.toDSPoint()
+                ptY = self.ptY.toDSPoint()
+                vectorX = ds.Geometry.Vector.ByTwoPoints(origin, ptX)
+                vectorY = ds.Geometry.Vector.ByTwoPoints(origin, ptY)
+                return ds.Geometry.Ellipse.ByOriginVectors(origin, vectorX, vectorY)
         def toRHEllipse(self):
-                rhPlane = self.plane.toRHPlane()
-                rhEllipse = rc.Geometry.Ellipse(rhPlane, self.xRadius, self.yRadius)
-                return rhEllipse
+                rhOrigin = self.origin.toRHPoint3d()
+                rhX = self.ptX.toRHPoint3d()
+                rhY = self.ptY.toRHPoint3d()
+                return rc.Geometry.Ellipse(center=rhOrigin, second=rhX, third=rhY)
 
 class MSArc(object):
 
@@ -286,37 +264,15 @@ class MSPolyCurve(object):
                 dsPolyCurve = ds.Geometry.PolyCurve.ByJoinedCurves(dsSubCurves)
                 return dsPolyCurve
         def toRHPolyCurve(self):
-                rhSubCurves = []
-                for crv in self.curves:
-                        if type(crv) == MSLine:
-                                rhSubCurves.append(crv.toRHLineCurve())
-                        elif type(crv) == MSArc:
-                                rhSubCurves.append(rc.Geometry.ArcCurve(crv.toRHArc()))
-                        elif type(crv) == MSNurbsCurve:
-                                rhSubCurves.append(crv.toRHNurbsCurve())
-                return rc.Geometry.Curve.JoinCurves(rhSubCurves)
-
-class MSMeshFace(object):		
-        def __init__(self, a= None, b= None, c= None, d= None):		
-                self.a = a		
-                self.b = b		
-                self.c = c		
-                self.d = d		
-                self.count = 3 if self.d is None else 4		
-        def addData(self, data):		
-                self.data = data		
-        def toDSMeshFace(self):		
-                if self.count == 3:		
-                        dsMeshFace = ds.Geometry.IndexGroup.ByIndices(self.a, self.b, self.c)		
-                else:		
-                        dsMeshFace = ds.Geometry.IndexGroup.ByIndices(self.a, self.b, self.c, self.d)		
-                return dsMeshFace		
-        def toRHMeshFace(self):		
-                if self.count == 3:		
-                        rhMeshFace = rc.Geometry.MeshFace(self.a, self.b, self.c)		
-                else:		
-                        rhMeshFace = rc.Geometry.MeshFace(self.a, self.b, self.c, self.d)		
-                return rhMeshFace
+                rhPolyCurve = rc.Geometry.PolyCurve()
+                for j in self.curves:
+                        if type(j) == MSLine:
+                                rhPolyCurve.Append(j.toRHLineCurve())
+                        elif type(j) == MSArc:
+                                rhPolyCurve.Append(j.toRHArc())
+                        elif type(j) == MSNurbsCurve:
+                                rhPolyCurve.Append(j.toRHNurbsCurve())
+                return rhPolyCurve
 
 class MSMesh(object):
 
@@ -337,24 +293,25 @@ class MSMesh(object):
                         dsVertexPositions.append(i.toDSPoint())
                 dsMesh = ds.Geometry.Mesh.ByPointsFaceIndices(dsVertexPositions, dsIndexGroups)
                 return dsMesh
-        def toRHMesh(self):		
--                rhMesh = rc.Geometry.Mesh()		
--                for pt in self.points:		
--                        rhMesh.Vertices.Add(pt.toRHPoint3d())		
--                rhFaces = []
--                for face in self.faceTopology:
-			if len(face)==3:
+        def toRHMesh(self):	
+                rhMesh = rc.Geometry.Mesh()		
+                for pt in self.points:		
+                        rhMesh.Vertices.Add(pt.toRHPoint3d())		
+                rhFaces = []
+                for face in self.faceTopology:
+        		if len(face)==3:
 				rhMeshFace = rc.Geometry.MeshFace(face[0], face[1], face[2])
 			else:
 				rhMeshFace = rc.Geometry.MeshFace(face[0], face[1], face[2], face[3])
--                        rhFaces.append(rhMeshFace)		
--                rhFaceArray = Array[rc.Geometry.MeshFace](rhFaces)		
--                rhMesh.Faces.AddFaces(rhFaceArray)		
--                return rhMesh
+                        rhFaces.append(rhMeshFace)		
+                rhFaceArray = Array[rc.Geometry.MeshFace](rhFaces)		
+                rhMesh.Faces.AddFaces(rhFaceArray)		
+                return rhMesh
+
 
 class MSNurbsSurface(object):
 
-        def __init__(self, points= None, weights= None, knotsU= None, knotsV= None, degreeU= None, degreeV= None, countU= None, countV= None, rational= None):
+        def __init__(self, points= None, weights = None, knotsU= None, knotsV= None, degreeU= None, degreeV= None, countU= None, countV= None, rational= None):
                 self.points = points
                 self.weights = weights
                 self.knotsU = knotsU
@@ -428,9 +385,9 @@ class MSNurbsSurface(object):
                         rhNurbsSurface.KnotsV[j] = rhKnotsV[j]
                 # add the control points
                 controlPts = [[] for i in range(len(list(self.points)))]
-                for index, _list in enumerate(self.points):
-                        for pt in _list:
-                                controlPts[index].append(pt.toRHPoint3d())
+                for index, ptList in enumerate(self.points):
+                        for pt in ptList:
+                                controlPts[index].append(pt.toRHPoint4d())
                 for i, _list in enumerate(controlPts):
                         for j, _item in enumerate(_list):
                               rhNurbsSurface.Points.SetControlPoint(i,j, rc.Geometry.ControlPoint(_item))
@@ -488,3 +445,10 @@ class MSBrep(object):
                         else:
                                 dsFaces.append(dsFace)
                 return ds.Geometry.PolySurface.ByJoinedSurfaces(dsFaces)
+        def toRHBrep(self):
+            rhFaces = []
+            brep = rc.Geometry.Brep()
+            bFaces = brep.Faces
+            for i in self.faces:
+                bFaces.Add(i.toRHNurbsSurface())
+            return brep
