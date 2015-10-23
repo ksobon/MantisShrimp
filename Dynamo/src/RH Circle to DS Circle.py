@@ -65,8 +65,7 @@ def GetCircle(rhObj):
 	try:
 		geo = rhObj.Geometry
 		if geo.ToString() == "Rhino.Geometry.ArcCurve" and geo.IsCircle():
-			if geo.IsClosed and geo.IsRational:
-				return rhCircleToCircle(geo)
+			return rhCircleToCircle(geo)
 	except:
 		pass
 
