@@ -1,4 +1,4 @@
-#Copyright(c) 2015, Konrad Sobon
+# Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
@@ -10,14 +10,11 @@ sys.path.append(pyt_path)
 
 import os
 appDataPath = os.getenv('APPDATA')
-msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
+msPath = appDataPath + r'\Dynamo\0.8\packages\Mantis Shrimp\extra'
 if msPath not in sys.path:
-	sys.path.Add(msPath)
-if rhPath not in sys.path:
-	sys.path.Add(rhPath)
-	clr.AddReferenceToFileAndPath(rhDllPath)
+	sys.path.append(msPath)
+rhDllPath = appDataPath + r'\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll'
+clr.AddReferenceToFileAndPath(rhDllPath)
 
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
@@ -26,7 +23,11 @@ from System.Collections.Generic import *
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
-rhObjects = IN[0]
+
+if isinstance(IN[0], list):
+	rhObjects = IN[0]
+else:
+	rhObjects = [IN[0]]
 
 #point/control point conversion function
 def rhPointToPoint(rhPoint):
@@ -58,15 +59,28 @@ def rhSingleSpanNurbsCurveToCurve(rhCurve):
 	Array.Clear(knots, 0, len(knots))
 	return dsNurbsCurve
 
-#convert rhino/gh geometry to ds geometry
-dsNurbsCurves = []
-for i in rhObjects:
+def GetNurbsCurve(rhObj):
 	try:
-		i = i.Geometry
+		geo = rhObj.Geometry
+		if geo.ToString() == "Rhino.Geometry.NurbsCurve":
+			return rhSingleSpanNurbsCurveToCurve(geo)
 	except:
 		pass
-	if i.ToString() == "Rhino.Geometry.NurbsCurve":
-		dsNurbsCurves.append(rhSingleSpanNurbsCurveToCurve(i))
 
+def ProcessList(_func, _list):
+	return map(lambda x: ProcessList(_func, x) if type(x) == list else _func(x) , _list)
+
+#convert rhino/gh geometry to ds geometry
+try:
+	errorReport = None
+	dsNurbsCurves = ProcessList(GetNurbsCurve, rhObjects)
+except:
+	# if error accurs anywhere in the process catch it
+	import traceback
+	errorReport = traceback.format_exc()
+	
 #Assign your output to the OUT variable
-OUT = dsNurbsCurves
+if errorReport == None:
+	OUT = dsNurbsCurves
+else:
+	OUT = errorReport
