@@ -1,4 +1,4 @@
-#Copyright(c) 2015, Konrad Sobon
+# Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
@@ -21,7 +21,11 @@ import Rhino as rc
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
-rhObjects = IN[0]
+
+if isinstance(IN[0], list):
+	rhObjects = IN[0]
+else:
+	rhObjects = [IN[0]]
 
 #3dPoint Conversion function
 def rhPoint3dToPoint(rhPoint):
@@ -39,17 +43,33 @@ def rhLineToLine(rhCurve):
 	dsEndPoint.Dispose()
 	return dsLine
 
+def GetObjectType(obj):
+	try:
+		geo = obj.Geometry
+		objType = geo.ToString().split(".")[2]
+	except:
+		objType = "Unknown"
+		pass
+	return objType
+
+def GetLine(rhObj):
+	try:
+		geo = rhObj.Geometry
+		if geo.ToString() == "Rhino.Geometry.LineCurve":
+			return rhLineToLine(geo)
+		else:
+			return GetObjectType(rhObj)
+	except:
+		pass
+		return "Unknown"
+
+def ProcessList(_func, _list):
+	return map(lambda x: ProcessList(_func, x) if type(x) == list else _func(x) , _list)
+
 #convert rhino/gh geometry to ds geometry
 try:
 	errorReport = None
-	dsLines = []
-	for i in rhObjects:
-		try:
-			i = i.Geometry
-		except:
-			pass
-		if i.ToString() == "Rhino.Geometry.LineCurve":
-			dsLines.append(rhLineToLine(i))
+	dsLines = ProcessList(GetLine, rhObjects)
 except:
 	# if error accurs anywhere in the process catch it
 	import traceback
