@@ -1,4 +1,4 @@
-#Copyright(c) 2015, Konrad Sobon
+# Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
@@ -21,7 +21,11 @@ import Rhino as rc
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
-rhObjects = IN[0]
+
+if isinstance(IN[0], list):
+	rhObjects = IN[0]
+else:
+	rhObjects = [IN[0]]
 
 #3dPoint Conversion function
 def rhPoint3dToPoint(rhPoint):
@@ -57,22 +61,26 @@ def rhMeshToMesh(rhMesh):
 		i.Dispose()
 	return dsMesh
 
+def GetMesh(rhObj):
+	try:
+		geo = rhObj.Geometry
+		if geo.ToString() == "Rhino.Geometry.Mesh":
+			return rhMeshToMesh(geo)
+	except:
+		pass
+
+def ProcessList(_func, _list):
+	return map(lambda x: ProcessList(_func, x) if type(x) == list else _func(x) , _list)
+
+#convert rhino/gh geometry to ds geometry
 try:
 	errorReport = None
-	#convert rhino/gh geometry to ds geometry
-	dsMeshes = []
-	for i in rhObjects:
-		try:
-			i = i.Geometry
-		except:
-			pass
-		if i.ToString() == "Rhino.Geometry.Mesh":
-			dsMeshes.append(rhMeshToMesh(i))
+	dsMeshes = ProcessList(GetMesh, rhObjects)
 except:
 	# if error accurs anywhere in the process catch it
 	import traceback
 	errorReport = traceback.format_exc()
-
+	
 #Assign your output to the OUT variable
 if errorReport == None:
 	OUT = dsMeshes
