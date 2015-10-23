@@ -43,25 +43,13 @@ def rhLineToLine(rhCurve):
 	dsEndPoint.Dispose()
 	return dsLine
 
-def GetObjectType(obj):
-	try:
-		geo = obj.Geometry
-		objType = geo.ToString().split(".")[2]
-	except:
-		objType = "Unknown"
-		pass
-	return objType
-
 def GetLine(rhObj):
 	try:
 		geo = rhObj.Geometry
 		if geo.ToString() == "Rhino.Geometry.LineCurve":
 			return rhLineToLine(geo)
-		else:
-			return GetObjectType(rhObj)
 	except:
 		pass
-		return "Unknown"
 
 def ProcessList(_func, _list):
 	return map(lambda x: ProcessList(_func, x) if type(x) == list else _func(x) , _list)
