@@ -1,4 +1,4 @@
-#Copyright(c) 2015, Konrad Sobon
+# Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
@@ -11,13 +11,16 @@ sys.path.append(pyt_path)
 import os
 appDataPath = os.getenv('APPDATA')
 msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
 if msPath not in sys.path:
 	sys.path.append(msPath)
-if rhPath not in sys.path:
-	sys.path.append(rhPath)
+txtFilePath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra\rhPath.txt"
+if not os.path.isfile(txtFilePath):
+	message = "Provide valid RhinoCommon.dll path."
+else:
+	file = open(txtFilePath, 'r+')
+	rhDllPath = file.readline()
 	clr.AddReferenceToFileAndPath(rhDllPath)
+	file.close()
 
 from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
@@ -26,7 +29,11 @@ from System.Collections.Generic import *
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
-rhObjects = IN[0]
+
+if isinstance(IN[0], list):
+	rhObjects = IN[0]
+else:
+	rhObjects = [IN[0]]
 
 #Vector3d conversion function
 def rhVector3dToVector(rhVector):
@@ -298,14 +305,28 @@ def rhBrepToPolySurface(brep):
 	del dsFaces[:]
 	return dsSurface
 
-#convert rhino/gh geometry to ds geometry
-dsSurfaces = []
-for i in rhObjects:
+def GetBrep(rhObj):
 	try:
-		i = i.Geometry
+		geo = rhObj.Geometry
+		if geo.ToString() == "Rhino.Geometry.Brep":
+			return rhBrepToPolySurface(geo)
 	except:
 		pass
-	if i.ToString() == "Rhino.Geometry.Brep":
-		dsSurfaces.append(rhBrepToPolySurface(i))
 
-OUT = dsSurfaces
+def ProcessList(_func, _list):
+	return map(lambda x: ProcessList(_func, x) if type(x) == list else _func(x) , _list)
+
+#convert rhino/gh geometry to ds geometry
+try:
+	errorReport = None
+	dsSurfaces = ProcessList(GetBrep, rhObjects)
+except:
+	# if error accurs anywhere in the process catch it
+	import traceback
+	errorReport = traceback.format_exc()
+	
+#Assign your output to the OUT variable
+if errorReport == None:
+	OUT = dsSurfaces
+else:
+	OUT = errorReport
