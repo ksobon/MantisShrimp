@@ -3,8 +3,6 @@
 
 import clr
 import sys
-clr.AddReference('ProtoGeometry')
-from Autodesk.DesignScript.Geometry import *
 
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
@@ -20,7 +18,6 @@ if rhPath not in sys.path:
 	sys.path.Add(rhPath)
 	clr.AddReferenceToFileAndPath(rhDllPath)
 
-import sys
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
 
