@@ -10,6 +10,14 @@ Couple things to check before you can get started:
 
   1. Exporting from Grasshopper uses a native IronPython2.7 module called pickle or cpickle. Make sure that your IronPython is installed in the default location C:\Program Files (x86)\IronPython 2.7. Again, unless you have specifically changed that location you should be good to go as its being installed by default when Dynamo is installed. 
   
-  2. Make sure that you have GhPython plug-in for Grasshopper installed. All Mantis Shrimp User Objects for Grasshopper are written in Python so you will need that plug-in for them to work. Download it at: http://www.food4rhino.com/project/ghpython?ufh 
-
+  2. Make sure that you have GhPython plug-in for Grasshopper installed. All Mantis Shrimp User Objects for Grasshopper are written in Python so you will need that plug-in for them to work. Download it at: http://www.food4rhino.com/project/ghpython?ufh
+  
+  3. Interoperability with Grasshopper relies on RhinoCommon.dll which is the standard Rhino geometry library. Please make sure that when exporting geometry from Dynamo you are using the same version of RhinoCommon.dll as you are using to import it into Grasshopper and vice versa. Common mistake is to point Dynamo at a 64-bit based library while trying to import into a 32-bit based Rhino/Grasshopper and vice versa. To make sure that both versions align please use "SpecifyRhinoCommon.dll Path " node in Dynamo that can be found under MantisShrimp>Grasshopper>Setup
+  
+  4. Please make sure that you have latest updates installed for Rhino. There are some known conflicts that will happen if you are running just the base installation of Rhino without any updates (it fails to load certain plug-ins).
+  
+  5. Please make sure that you are using back-slashes or "\" in your file paths and not forward-slashes "/" as Windows operating system doesn't like that and will throw an eception.
+  
+  6. Please make sure that you have writing and reading rights for the specified file path. Lack of such rights will cause an error. 
+  
   3. Watch these videos: http://archi-lab.net/?p=1486
