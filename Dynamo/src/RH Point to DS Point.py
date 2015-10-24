@@ -3,7 +3,6 @@
 
 import clr
 import sys
-clr.AddReference('ProtoGeometry')
 
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
@@ -16,8 +15,8 @@ if msPath not in sys.path:
 rhDllPath = appDataPath + r'\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll'
 clr.AddReferenceToFileAndPath(rhDllPath)
 
-from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
+from mantisshrimp import rhPointToPoint
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
@@ -27,17 +26,11 @@ if isinstance(IN[0], list):
 else:
 	rhObjects = [IN[0]]
 
-#point/control point conversion function
-def rhPointToPoint(rhPoint):
-	rhPointX = rhPoint.Location.X
-	rhPointY = rhPoint.Location.Y
-	rhPointZ = rhPoint.Location.Z
-	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
-
 def GetPoint(rhObj):
 	try:
 		geo = rhObj.Geometry
 		if geo.ToString() == "Rhino.Geometry.Point":
+			#return rhPointToPoint(geo)
 			return rhPointToPoint(geo)
 	except:
 		pass
