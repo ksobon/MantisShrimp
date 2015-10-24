@@ -3,8 +3,6 @@
 
 import clr
 import sys
-clr.AddReference('ProtoGeometry')
-from Autodesk.DesignScript.Geometry import *
 
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
@@ -20,8 +18,8 @@ if rhPath not in sys.path:
 	sys.path.Add(rhPath)
 	clr.AddReferenceToFileAndPath(rhDllPath)
 
-from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
+from mantisshrimp import rhCurveToPolyCurve
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
@@ -30,24 +28,6 @@ if isinstance(IN[0], list):
 	rhObjects = IN[0]
 else:
 	rhObjects = [IN[0]]
-
-#3dPoint Conversion function
-def rhPoint3dToPoint(rhPoint):
-	rhPointX = rhPoint.X
-	rhPointY = rhPoint.Y
-	rhPointZ = rhPoint.Z
-	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
-
-#poly curve conversion function
-def rhCurveToPolyCurve(rhCurve):
-	ptArray = []
-	pCount = rhCurve.PointCount
-	for i in range(0, pCount):
-		dsPoint = rhPoint3dToPoint(rhCurve.Point(i))
-		ptArray.append(dsPoint)
-	dsPolyCurve = PolyCurve.ByPoints(ptArray)
-	del ptArray[:]
-	return dsPolyCurve
 
 def GetPolylineCurve(rhObj):
 	try:
