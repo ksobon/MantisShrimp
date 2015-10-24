@@ -1,54 +1,57 @@
-#Copyright(c) 2015, Konrad Sobon
+# Copyright(c) 2015, Konrad Sobon
 # @arch_laboratory, http://archi-lab.net
 
 import clr
 import sys
-clr.AddReference('ProtoGeometry')
 
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
 sys.path.append(pyt_path)
 
 import os
 appDataPath = os.getenv('APPDATA')
-msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
-rhPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin"
-rhDllPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll"
+msPath = appDataPath + r'\Dynamo\0.8\packages\Mantis Shrimp\extra'
 if msPath not in sys.path:
-	sys.path.Add(msPath)
-if rhPath not in sys.path:
-	sys.path.Add(rhPath)
-	clr.AddReferenceToFileAndPath(rhDllPath)
+	sys.path.append(msPath)
+rhDllPath = appDataPath + r'\Dynamo\0.8\packages\Mantis Shrimp\bin\Rhino3dmIO.dll'
+clr.AddReferenceToFileAndPath(rhDllPath)
 
-from Autodesk.DesignScript.Geometry import *
 import Rhino as rc
+from mantisshrimp import rhPoint3dToPoint
 
 #The inputs to this node will be stored as a list in the IN variable.
 dataEnteringNode = IN
-rhObjects = IN[0]
 
-#3dPoint Conversion function
-def rhPoint3dToPoint(rhPoint):
-	rhPointX = rhPoint.X
-	rhPointY = rhPoint.Y
-	rhPointZ = rhPoint.Z
-	return Point.ByCoordinates(rhPointX, rhPointY, rhPointZ)
+if isinstance(IN[0], list):
+	rhObjects = IN[0]
+else:
+	rhObjects = [IN[0]]
 
-#convert rhino/gh geometry to ds geometry
-points = [[] for i in range(len(rhObjects))]
-for index, item in enumerate(rhObjects):
+def GetMeshFaceCenter(rhObj):
 	try:
-		item = item.Geometry
+		points = []
+		geo = rhObj.Geometry
+		if geo.ToString() == "Rhino.Geometry.Mesh":
+			faces = geo.Faces
+			for i in range(0, faces.Count, 1):
+				points.append(rhPoint3dToPoint(faces.GetFaceCenter(i)))
+			return points
 	except:
 		pass
-	if item.ToString() == "Rhino.Geometry.Mesh":
-		faces = item.Faces
-		for i in range(0, faces.Count, 1):
-			points[index].append(rhPoint3dToPoint(faces.GetFaceCenter(i)))
-	else:
-		message = "Please provide Mesh to extract \nFace Center points."
 
+def ProcessList(_func, _list):
+	return map(lambda x: ProcessList(_func, x) if type(x) == list else _func(x) , _list)
+
+#convert rhino/gh geometry to ds geometry
+try:
+	errorReport = None
+	dsPoints = ProcessList(GetMeshFaceCenter, rhObjects)
+except:
+	# if error accurs anywhere in the process catch it
+	import traceback
+	errorReport = traceback.format_exc()
+	
 #Assign your output to the OUT variable
-if len(points) == 0:
-	OUT = '\n'.join('{:^35}'.format(s) for s in message.split('\n'))
+if errorReport == None:
+	OUT = dsPoints
 else:
-	OUT = points
+	OUT = errorReport
