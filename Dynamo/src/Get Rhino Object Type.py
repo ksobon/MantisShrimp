@@ -26,7 +26,14 @@ else:
 def GetObjectType(obj):
 	try:
 		geo = obj.Geometry
-		objType = geo.ToString().split(".")[2]
+		if geo.ToString() == "Rhino.Geometry.ArcCurve" and geo.IsArc():
+			objType = "Arc"
+		elif geo.ToString() == "Rhino.Geometry.NurbsCurve" and geo.IsClosed and geo.IsRational:
+			objType = "Ellipse"
+		elif geo.ToString() == "Rhino.Geometry.ArcCurve" and geo.IsCircle():
+			objType = "Circle"
+		else:
+			objType = geo.ToString().split(".")[2]
 	except:
 		objType = "Unknown"
 		pass
