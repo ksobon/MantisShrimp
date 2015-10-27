@@ -7,7 +7,7 @@ Grasshopper and Dynamo interop library
 """
 import clr
 import sys
-sys.path.append(r"C:\Program Files\Dynamo 0.8")
+sys.path.append(r"C:\Program Files\Dynamo 0.9")
 clr.AddReference('ProtoGeometry')
 
 pyt_path = r'C:\Program Files (x86)\IronPython 2.7\Lib'
@@ -16,10 +16,10 @@ sys.path.append(pyt_path)
 import os
 import os.path
 appDataPath = os.getenv('APPDATA')
-msPath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra"
+msPath = appDataPath + r"\Dynamo\0.9\packages\Mantis Shrimp\extra"
 if msPath not in sys.path:
         sys.path.Add(msPath)
-txtFilePath = appDataPath + r"\Dynamo\0.8\packages\Mantis Shrimp\extra\rhPath.txt"
+txtFilePath = appDataPath + r"\Dynamo\0.9\packages\Mantis Shrimp\extra\rhPath.txt"
 if not os.path.isfile(txtFilePath):
 	message = "Provide valid RhinoCommon.dll path."
 else:
