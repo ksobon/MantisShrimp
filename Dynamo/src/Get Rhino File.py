@@ -9,25 +9,11 @@ sys.path.append(pyt_path)
 
 import os
 appDataPath = os.getenv('APPDATA')
-dynVersions = ["0.7", "0.8", "0.9"]
-dynFolders = ["extra", "bin"]
-for i in dynVersions:
-	for j in dynFolders:
-		part1 = "\\Dynamo\\"
-		version = i
-		part2 = "\\packages\\Mantis Shrimp\\"
-		folder = j
-		msPath = appDataPath + part1 + version + part2 + folder
-		if j == "extra":
-			if msPath not in sys.path:
-				sys.path.Add(msPath)
-		if j == "bin":
-			dllName = "\\Rhino3dmIO.dll"
-			rhDllPath = appDataPath + part1 + version + part2 + folder + dllName
-			if msPath not in sys.path:
-				sys.path.Add(msPath)
-				if os.path.isfile(rhDllPath):
-					clr.AddReferenceToFileAndPath(rhDllPath)
+msPath = appDataPath + r'\Dynamo\0.9\packages\Mantis Shrimp\extra'
+if msPath not in sys.path:
+	sys.path.append(msPath)
+rhDllPath = appDataPath + r'\Dynamo\0.9\packages\Mantis Shrimp\bin\Rhino3dmIO.dll'
+clr.AddReferenceToFileAndPath(rhDllPath)
 
 import Rhino as rc
 
