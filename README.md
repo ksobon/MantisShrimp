@@ -21,3 +21,18 @@ Couple things to check before you can get started:
   6. Please make sure that you have writing and reading rights for the specified file path. Lack of such rights will cause an error. 
   
   3. Watch these videos: http://archi-lab.net/?p=1486
+  
+Licence
+============
+
+Mantis Shrimp: A Plugin for Dynamo and Rhino/Grasshopper Interoperability (GPL) started by Konrad K Sobon
+
+Copyright (c) 2014-2015, Konrad K Sobon
+
+Mantis Shrimp is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+
+Mantis Shrimp is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with Mantis Shrimp; If not, see http://www.gnu.org/licenses/.
+
+@license GPL-3.0+ http://spdx.org/licenses/GPL-3.0+
