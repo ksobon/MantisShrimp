@@ -27,7 +27,7 @@ Licence
 
 Mantis Shrimp: A Plugin for Dynamo and Rhino/Grasshopper Interoperability (GPL) started by Konrad K Sobon
 
-Copyright (c) 2014-2015, Konrad K Sobon
+Copyright (c) 2014-2016, Konrad K Sobon
 
 Mantis Shrimp is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 
