@@ -22,7 +22,7 @@ Couple things to check before you can get started:
   
   3. Watch these videos: http://archi-lab.net/?p=1486
   
-Licence
+License
 ============
 
 Mantis Shrimp: A Plugin for Dynamo and Rhino/Grasshopper Interoperability (GPL) started by Konrad K Sobon
